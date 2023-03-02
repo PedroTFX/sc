@@ -6,6 +6,9 @@ import java.util.Scanner;
 
 public class Tintolmarket {
 	private static Scanner sc = new Scanner(System.in);
+	private Socket clientSocket = null;
+	private ObjectInputStream in = null;
+	private ObjectOutputStream out = null;
 
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
@@ -47,7 +50,13 @@ public class Tintolmarket {
 	}
 
 	private void initializeServerConnection(String host, int port) {
-
+		try {
+			clientSocket = new Socket(host, port);
+			in = new ObjectInputStream(clientSocket.getInputStream());
+			out = new ObjectOutputStream(clientSocket.getOutputStream());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void authenticateUser(String userId, String password) {
@@ -59,7 +68,11 @@ public class Tintolmarket {
 	}
 
 	private void disconnectFromServer() {
-
+		try {
+			clientSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void close() {
