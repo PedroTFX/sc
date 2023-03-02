@@ -60,7 +60,23 @@ public class Tintolmarket {
 	}
 
 	private void authenticateUser(String userId, String password) {
+		Request authentication = Request.createAuthenticateOperation(userId, password);
+		Response response = null;
 
+		try {
+			out.writeObject(authentication);
+			response = (Response) in.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		// Print error if there's one
+		if (response.type == Response.Type.ERROR) {
+			System.out.println(response.message);
+			System.exit(1);
+		} else {
+			System.out.println("Utilizador autenticado ✅");
+		}
 	}
 
 	private void run() {
