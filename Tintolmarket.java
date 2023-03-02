@@ -27,7 +27,7 @@ public class Tintolmarket {
 		String password = args.length > 2 ? args[2] : getPassword();
 
 		// Lançar
-		Tintolmarket tm = new Tintolmarket(serverAddress, serverPort, userId, password);
+		new Tintolmarket(serverAddress, serverPort, userId, password);
 	}
 
 	private static String getPassword() {
