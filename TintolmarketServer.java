@@ -6,6 +6,7 @@ import java.net.Socket;
 
 public class TintolmarketServer {
 
+    
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
 		TintolmarketServer server = new TintolmarketServer();
