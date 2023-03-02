@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.Scanner;
 
 public class Tintolmarket {
@@ -5,7 +9,7 @@ public class Tintolmarket {
 
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
-		if(args.length < 2) {
+		if (args.length < 2) {
 			System.out.println("Utilização: java TintolMarket <server-address>[:port] <userId> [password]");
 			return;
 		}
@@ -30,7 +34,35 @@ public class Tintolmarket {
 		return sc.nextLine();
 	}
 
-	private Tintolmarket(String serverAddress, int serverPort, String userId, String password) {
+	private Tintolmarket(String host, int port, String userId, String password) {
+		initializeServerConnection(host, port);
+
+		authenticateUser(userId, password);
+
+		run();
+
+		disconnectFromServer();
+
+		close();
+	}
+
+	private void initializeServerConnection(String host, int port) {
+
+	}
+
+	private void authenticateUser(String userId, String password) {
+
+	}
+
+	private void run() {
+
+	}
+
+	private void disconnectFromServer() {
+
+	}
+
+	private void close() {
 
 	}
 }
