@@ -15,4 +15,5 @@ public class Response {
 	int quantity;
 	int balance;
 	HashMap<String, String[]> messages;
+
 }

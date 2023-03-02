@@ -1,6 +1,14 @@
 public class Request {
 	enum Operation {
-		AUTHENTICATE, ADD, SELL, VIEW, BUY, WALLET, CLASSIFY, TALK, READ
+		AUTHENTICATE, 
+		ADD,
+		SELL,
+		VIEW,
+		BUY,
+		WALLET,
+		CLASSIFY,
+		TALK,
+		READ
 	}
 
 	Operation operation;

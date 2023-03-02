@@ -13,7 +13,7 @@ public class Tintolmarket {
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
 		if (args.length < 2) {
-			System.out.println("Utilização: java TintolMarket <server-address>[:port] <userId> [password]");
+			System.out.println("Utilizacao: java TintolMarket <server-address>[:port] <userId> [password]");
 			return;
 		}
 
@@ -22,14 +22,12 @@ public class Tintolmarket {
 		String serverAddress = serverAddressPort[0];
 		int serverPort = serverAddressPort.length > 1 ? Integer.parseInt(serverAddressPort[1]) : 12345;
 
-		// Obter userID
+		// Obter userID and password
 		String userId = args[1];
-
-		// Obter password
 		String password = args.length > 2 ? args[2] : getPassword();
 
 		// Lançar
-		new Tintolmarket(serverAddress, serverPort, userId, password);
+		Tintolmarket tm = new Tintolmarket(serverAddress, serverPort, userId, password);
 	}
 
 	private static String getPassword() {
@@ -39,17 +37,15 @@ public class Tintolmarket {
 
 	private Tintolmarket(String host, int port, String userId, String password) {
 		initializeServerConnection(host, port);
-
 		authenticateUser(userId, password);
 
 		run();
 
 		disconnectFromServer();
-
 		close();
 	}
 
-	private void initializeServerConnection(String host, int port) {
+	private void initializeServerConnection(String host, int port){
 		try {
 			clientSocket = new Socket(host, port);
 			in = new ObjectInputStream(clientSocket.getInputStream());
@@ -74,9 +70,10 @@ public class Tintolmarket {
 		if (response.type == Response.Type.ERROR) {
 			System.out.println(response.message);
 			System.exit(1);
-		} else {
-			System.out.println("Utilizador autenticado ✅");
 		}
+		
+		System.out.println("Utilizador autenticado");
+		
 	}
 
 	private void run() {
