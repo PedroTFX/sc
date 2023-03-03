@@ -1,6 +1,8 @@
-public class Request {
-	enum Operation {
-		AUTHENTICATE, 
+import java.io.Serializable;
+
+public class Request implements Serializable{
+	public enum Operation {
+		AUTHENTICATE,
 		ADD,
 		SELL,
 		VIEW,
