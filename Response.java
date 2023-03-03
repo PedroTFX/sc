@@ -1,10 +1,11 @@
-import java.util.Dictionary;
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class Response {
+public class Response implements Serializable{
 	enum Type {
 		OK, ERROR
 	}
+
 
 	Type type;
 	String message;
@@ -16,4 +17,17 @@ public class Response {
 	int balance;
 	HashMap<String, String[]> messages;
 
-}
+	private Response(Type operation) {
+		this.type = operation;
+	}
+
+	public Response(){
+		
+	}
+
+	static public Response createAuthenticateResponse(String message, boolean ok) {
+		Response response = new Response(ok ? Type.OK :Type.ERROR);
+		response.message = message;
+		return response;
+	}
+}//class
