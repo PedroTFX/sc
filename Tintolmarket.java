@@ -1,10 +1,11 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Tintolmarket {
+public class Tintolmarket implements Serializable{
 	private static Scanner sc = new Scanner(System.in);
 	private Socket clientSocket = null;
 	private ObjectInputStream in = null;
@@ -37,11 +38,13 @@ public class Tintolmarket {
 
 	private Tintolmarket(String host, int port, String userId, String password) {
 		initializeServerConnection(host, port);
+
 		authenticateUser(userId, password);
 
 		run();
 
 		disconnectFromServer();
+
 		close();
 	}
 
@@ -60,7 +63,7 @@ public class Tintolmarket {
 		Response response = null;
 
 		try {
-			out.writeObject(authentication);
+			out.writeObject((Request)authentication);
 			response = (Response) in.readObject();
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
@@ -71,9 +74,9 @@ public class Tintolmarket {
 			System.out.println(response.message);
 			System.exit(1);
 		}
-		
+
 		System.out.println("Utilizador autenticado");
-		
+
 	}
 
 	private void run() {
