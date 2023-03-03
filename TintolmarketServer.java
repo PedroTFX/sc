@@ -1,16 +1,16 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Dictionary;
 import java.util.Hashtable;
 
-public class TintolmarketServer {
+public class TintolmarketServer implements Serializable{
 
 	private static int port = 12345;
 	private static Hashtable<String, String> userTable;
-    
+
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
 		TintolmarketServer server = new TintolmarketServer();
@@ -27,24 +27,25 @@ public class TintolmarketServer {
 	 */
 	public void startServer (int port){
 		ServerSocket sSoc = null;
-        
+
 		try {
 			sSoc = new ServerSocket(port);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
 		}
-         
+
 		while(true) {
 			try {
 				Socket inSoc = sSoc.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
+				int i = 0;
 		    }
 		    catch (IOException e) {
 		        e.printStackTrace();
 		    }
-		    
+
 		}
 		//sSoc.close();
 	}
@@ -59,20 +60,20 @@ public class TintolmarketServer {
 			socket = inSoc;
 			System.out.println("thread do server para cada cliente");
 		}
- 
+
 		public void run(){
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				String user = null;
-				String pass = null;
-			
+				Request request = null;
+				Response response = new Response();
+
 				try {
-					user = (String)inStream.readObject();
-					pass = (String)inStream.readObject();
-					
-				}catch (ClassNotFoundException e1) {
+					request = (Request)inStream.readObject();
+					// pass = (String)inStream.readObject();
+
+				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
 				}
 
@@ -83,13 +84,19 @@ public class TintolmarketServer {
 
 				//checks if the user exists in the userTable, if it does, checks if the password is correct
 				//returns OK if the user exists and the password is correct, ERROR otherwise
-				outStream.writeObject((checkUser(user, pass))?Response.Type.OK:Response.Type.ERROR);
-				
+				if (request.operation == Request.Operation.AUTHENTICATE) {
+					if((checkUser(request.user, request.password))) {
+						response.type = Response.Type.OK;
+						response.message = "OK";
+					}
+				}
+				outStream.writeObject(response);
+
 				//TODO: loop between client and server for the actual communication
 
 				outStream.close();
 				inStream.close();
- 			
+
 				socket.close();
 
 			} catch (IOException e) {
