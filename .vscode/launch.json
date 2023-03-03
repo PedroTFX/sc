@@ -9,7 +9,14 @@
 			"type": "java",
 			"request": "launch",
 			"mainClass": "Tintolmarket",
-			"args": "127.0.0.1:123 userqualquer"
+			"args": "127.0.0.1:12345 userqualquer"
+		},
+		{
+			"name": "Server",
+			"type": "java",
+			"request": "launch",
+			"mainClass": "TintolmarketServer",
+			"args": ""
 		}
 	]
 }
