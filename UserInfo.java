@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.BufferedReader;
 import java.util.Hashtable;
 
@@ -16,7 +17,7 @@ class UserInfo{
             BufferedReader in = new BufferedReader(new FileReader(filename));
             String line;
             while((line = in.readLine()) != null){
-                String[] split = line.split(" ");
+                String[] split = line.split(":");
                 userTable.put(split[0], split[1]);
             }
             in.close();
@@ -51,16 +52,29 @@ class UserInfo{
      * @param password the password
      * @return true if the user was registered, false if the user already exists
      */
-    public static boolean registerUser(String user, String password){
+    public static boolean registerUser(String filename, String user, String password){
         if(isRegistered(user)){
             System.err.println("User already exists");
             return false;
         }
+        
+        //write to file
         userTable.put(user, password);
-        //TODO: write to file ???
-        return true;
+        return writeToFile(filename, user + ":" + password);
     }
 
+    private static boolean writeToFile(String filename, String line){
+        try{
+            FileWriter out = new FileWriter(filename, true);
+            out.write(line);
+            out.close();
+            return true;
+        }catch(IOException e){
+            System.err.println(e.getMessage());
+            System.exit(-1);
+            return false;
+        }
+    }
 
     /**
      * Tests
