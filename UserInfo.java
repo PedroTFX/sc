@@ -7,6 +7,7 @@ import java.util.Hashtable;
 class UserInfo{
 
     private static Hashtable<String, String> userTable;
+    private static String serverPath = "users.txt";
 
     /**
      * Constructor that reads the file and puts in usertable
@@ -52,7 +53,7 @@ class UserInfo{
      * @param password the password
      * @return true if the user was registered, false if the user already exists
      */
-    public static boolean registerUser(String filename, String user, String password){
+    public static boolean registerUser(String user, String password){
         if(isRegistered(user)){
             System.err.println("User already exists");
             return false;
@@ -60,7 +61,7 @@ class UserInfo{
         
         //write to file
         userTable.put(user, password);
-        return writeToFile(filename, user + ":" + password);
+        return writeToFile(serverPath, user + ":" + password);
     }
 
     private static boolean writeToFile(String filename, String line){
@@ -79,19 +80,19 @@ class UserInfo{
     /**
      * Tests
      */
-    // public static void main(String[] args) {
-    //     //tests
-    //     UserInfo ui = new UserInfo("users.txt");
-    //     System.out.println(ui.isAuthenticated("user1", "pass1")); //true
-    //     System.out.println(ui.isAuthenticated("user1", "pass2")); //false
-    //     System.out.println(ui.isAuthenticated("user2", "pass2")); //true
+    public static void main(String[] args) {
+        //tests
+        UserInfo ui = new UserInfo("users.txt");
+        System.out.println(ui.isAuthenticated("user1", "pass1")); //true
+        System.out.println(ui.isAuthenticated("user1", "pass2")); //false
+        System.out.println(ui.isAuthenticated("user2", "pass2")); //true
 
-    //     System.out.println(ui.isRegistered("user1"));             //true
-    //     System.out.println(ui.isRegistered("user2"));             //true
-    //     System.out.println(ui.isRegistered("user3"));             //false
+        System.out.println(ui.isRegistered("user1"));             //true
+        System.out.println(ui.isRegistered("user2"));             //true
+        System.out.println(ui.isRegistered("user3"));             //false
 
-    //     registerUser("user3", "pass3");
-    //     System.out.println(ui.isRegistered("user3"));             //true
-    //     System.out.println(ui.isAuthenticated("user3", "pass3")); //true
-    // }
+        registerUser("user3", "pass3");
+        System.out.println(ui.isRegistered("user3"));             //true
+        System.out.println(ui.isAuthenticated("user3", "pass3")); //true
+    }
 }
