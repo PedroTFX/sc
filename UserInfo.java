@@ -45,8 +45,6 @@ class UserInfo{
 
     /**
      * Registers a user on the hashtable
-     * 
-     * TODO: write to file ???
      * If the user already exists do we authenticate or not?
      * 
      * @param user the username
@@ -61,7 +59,7 @@ class UserInfo{
         
         //write to file
         userTable.put(user, password);
-        return writeToFile(serverPath, user + ":" + password);
+        return writeToFile(serverPath, user + ":" + password + "\n\n");
     }
 
     private static boolean writeToFile(String filename, String line){
@@ -91,7 +89,7 @@ class UserInfo{
         System.out.println(ui.isRegistered("user2"));             //true
         System.out.println(ui.isRegistered("user3"));             //false
 
-        registerUser("user3", "pass3");
+        System.out.println(registerUser("user3", "pass3"));       //true
         System.out.println(ui.isRegistered("user3"));             //true
         System.out.println(ui.isAuthenticated("user3", "pass3")); //true
     }
