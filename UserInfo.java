@@ -30,9 +30,18 @@ class UserInfo{
 
     /**
      * Returns if the user and the password are a match
-     * Assumes that the user is registered
      */
-    public static boolean isAuthenticated(String user, String password){
+    public static boolean authentication(String user, String password){
+        if(password.equals(null)){
+            return false;
+        }
+
+        //if the user is not registered, register
+        if(!isRegistered(user)){
+            return registerUser(user, password);
+        }
+
+        //if the user is registered, check if the password is correct
         return userTable.get(user).equals(password);
     }
 
@@ -40,19 +49,21 @@ class UserInfo{
      * Returns if the user is registered
      */
     public static boolean isRegistered(String user){
+        if(user.equals(null)){
+            System.out.println("User is null");
+            return false;
+        }
         return userTable.containsKey(user);
     }
 
     /**
-     * Registers a user on the hashtable
-     * If the user already exists do we authenticate or not?
-     * 
+     * Registers a user on the hashtable and writes to file
      * @param user the username
      * @param password the password
      * @return true if the user was registered, false if the user already exists
      */
     public static boolean registerUser(String user, String password){
-        if(isRegistered(user)){
+        if(isRegistered(user)){      //can happen in registration NOT IN AUTHENTICATION
             System.err.println("User already exists");
             return false;
         }
@@ -81,9 +92,9 @@ class UserInfo{
     public static void main(String[] args) {
         //tests
         UserInfo ui = new UserInfo("users.txt");
-        System.out.println(ui.isAuthenticated("user1", "pass1")); //true
-        System.out.println(ui.isAuthenticated("user1", "pass2")); //false
-        System.out.println(ui.isAuthenticated("user2", "pass2")); //true
+        System.out.println(ui.authentication("user1", "pass1"));  //true
+        System.out.println(ui.authentication("user1", "pass2"));  //false
+        System.out.println(ui.authentication("user2", "pass2"));  //true
 
         System.out.println(ui.isRegistered("user1"));             //true
         System.out.println(ui.isRegistered("user2"));             //true
@@ -91,6 +102,6 @@ class UserInfo{
 
         System.out.println(registerUser("user3", "pass3"));       //true
         System.out.println(ui.isRegistered("user3"));             //true
-        System.out.println(ui.isAuthenticated("user3", "pass3")); //true
+        System.out.println(ui.authentication("user3", "pass3"));  //true
     }
 }
