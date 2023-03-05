@@ -92,27 +92,32 @@ public class TintolmarketServer implements Serializable {
 
 		private void authenticate() {
 			try {
-				// Receive request
-				Request request = (Request) inStream.readObject();
+				//init
+				Request request = (Request) inStream.readObject();			// Read request
+				Response response = new Response();							// Prepare response
 
-				// Prepare response
-				Response response = new Response();
+				// Check if request is an authentication request
 				if (request.operation != Request.Operation.AUTHENTICATE) {
 					response.type = Response.Type.ERROR;
 					response.message = "O utilizador tem que se autenticar primeiro!";
 					outStream.writeObject(response);
 					close();
+					
 				}
 
-				boolean validUser = checkUser(request.user, request.password);
-				response.type = validUser ? Response.Type.OK : Response.Type.ERROR;
-				response.message = validUser ? "OK" : "Combinação userID/password incorreta";
-				outStream.writeObject(response);
-				if (validUser) {
-					userId = request.user;
-				} else {
+				// Check if user exists and password is correct
+				
+				response.type = Response.Type.OK;
+				response.message = "OK";
+				if (!UserInfo.authentication(request.user, request.password)) {
+					response.type = Response.Type.ERROR;
+					response.message = "Combinação userID/password incorreta";
+					outStream.writeObject(response);
 					close();
 				}
+
+				// Send response
+				outStream.writeObject(response);				
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -229,27 +234,6 @@ public class TintolmarketServer implements Serializable {
 				sum += reviews.get(user);
 			}
 			return sum / userSet.size();
-		}
-
-		/**
-		 * Checks if the user exists in the userTable, if it does, checks if the
-		 * password is correct
-		 *
-		 * @param user
-		 * @param pass
-		 * @return
-		 */
-		private boolean checkUser(String id, String pass) {
-			/*
-			 * if (userTable.contains(user)) {
-			 * return userTable.get(user).equals(pass);
-			 * } else {
-			 * userTable.put(user, pass);
-			 * return true;
-			 * }
-			 */
-			User user = userTable.get(id);
-			return user != null ? user.password.equals(pass) : userTable.put(id, new User(id, pass)) == null;
 		}
 
 		private void close() {

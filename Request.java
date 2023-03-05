@@ -15,12 +15,15 @@ public class Request implements Serializable {
 	}
 
 	Operation operation;
+	
 	String wine;
 	String image;
 	int value;
 	int quantity;
 	String seller;
 	int stars;
+
+	
 	String user;
 	String password;
 	String message;
