@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public class Request implements Serializable{
+public class Request implements Serializable {
 	public enum Operation {
 		AUTHENTICATE,
 		ADD,
@@ -10,7 +10,8 @@ public class Request implements Serializable{
 		WALLET,
 		CLASSIFY,
 		TALK,
-		READ
+		READ,
+		QUIT
 	}
 
 	Operation operation;
@@ -23,6 +24,11 @@ public class Request implements Serializable{
 	String user;
 	String password;
 	String message;
+
+	public String toString() {
+		return String.format("%s | %s | %s | %d | %d | %s | %d | %s | %s | %s", operation, wine, image, value, quantity,
+				seller, stars, user, password, message);
+	}
 
 	private Request(Operation operation) {
 		this.operation = operation;
@@ -65,7 +71,8 @@ public class Request implements Serializable{
 	}
 
 	static public Request createWalletOperation() {
-		return new Request(Operation.WALLET);
+		Request wallet = new Request(Operation.WALLET);
+		return wallet;
 	}
 
 	static public Request createClassifyOperation(String wine, int stars) {
