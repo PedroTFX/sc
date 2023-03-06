@@ -20,8 +20,9 @@ public class TintolmarketServer implements Serializable {
 		TintolmarketServer server = new TintolmarketServer();
 		userTable = new Hashtable<String, User>();
 		wines = new ArrayList<Wine>();
+		UserInfo userInfo = new UserInfo("users.txt");
 
-		// getting port from args else defaults to 12345
+		// getting port from args else defaults to 1234
 		port = args.length > 0 ? Integer.parseInt(args[0]) : port;
 		server.startServer(port);
 	}
