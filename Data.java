@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -24,22 +25,19 @@ public class Data {
 				}
 			}
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
 			br.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	private static void updateLine(String toUpdate, String updated, String file_name) throws IOException {
+	public static void updateLine(String toUpdate, String updated, String file_name) throws IOException {
 		BufferedReader file = new BufferedReader(new FileReader(new File(file_name)));
 		String line;
 		String input = "";
@@ -114,10 +112,21 @@ public class Data {
 			content = content.replaceAll("portinho:69,69,3,5,1,2", "replace all");
 			Files.write(Paths.get("wines.txt"), content.getBytes(charset));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+
+
+	}
+	public static void writeOnFile(String line, String fileName/* , Image imagem */){
+		BufferedWriter bw = null;
+		try {
+			bw = new BufferedWriter(new FileWriter(fileName));
+			bw.write(line);
+			bw.write("\n");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
 
