@@ -5,6 +5,13 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"type": "java",
+			"name": "Data",
+			"request": "launch",
+			"mainClass": "Data",
+			"projectName": "sc_1c260985"
+		},
+		{
 			"name": "Client",
 			"type": "java",
 			"request": "launch",

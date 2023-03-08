@@ -103,11 +103,11 @@ public class TintolmarketServer implements Serializable {
 					response.message = "O utilizador tem que se autenticar primeiro!";
 					outStream.writeObject(response);
 					close();
-					
+
 				}
 
 				// Check if user exists and password is correct
-				
+
 				response.type = Response.Type.OK;
 				response.message = "OK";
 				if (!UserInfo.authentication(request.user, request.password)) {
@@ -118,7 +118,7 @@ public class TintolmarketServer implements Serializable {
 				}
 
 				// Send response
-				outStream.writeObject(response);				
+				outStream.writeObject(response);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -208,7 +208,6 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.ERROR;
 					response.message = "Esse vinho não existe!";
 				} else {
-					wine.toSell = request.quantity;
 					wine.stock -= request.quantity;
 					wine.price = request.value;
 					response.type = Response.Type.OK;
