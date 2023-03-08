@@ -44,8 +44,9 @@ public class Data {
 		String line;
 		String input = "";
 
-		while ((line = file.readLine()) != null)
+		while ((line = file.readLine()) != null){
 			input += line + "\n";
+		}
 
 		input = input.replace(toUpdate, updated);
 

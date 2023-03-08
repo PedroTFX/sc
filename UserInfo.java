@@ -188,9 +188,7 @@ class UserInfo{
     }
 
     public static boolean sellWine(String user1, String wine, String user2){
-        //TODO: check if user1 has wine
-        //TODO: check if user2 has enough money
-        //TODO: check if wine exists
+        
         //TODO: check if amount is not null
         //TODO: check if user 2 can buy wine
     }
@@ -237,6 +235,8 @@ class UserInfo{
         for(String s : userTable.keySet()){
             System.out.println(s + " " + userTable.get(s));
         }
+
+
 
         // System.out.println(ui.authentication("user1", "pass1"));  //true
         // System.out.println(ui.authentication("user1", "pass2"));  //false
