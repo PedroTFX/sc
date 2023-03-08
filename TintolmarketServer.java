@@ -20,8 +20,9 @@ public class TintolmarketServer implements Serializable {
 		TintolmarketServer server = new TintolmarketServer();
 		userTable = new Hashtable<String, User>();
 		wines = new ArrayList<Wine>();
+		UserInfo userInfo = new UserInfo("users.txt");
 
-		// getting port from args else defaults to 12345
+		// getting port from args else defaults to 1234
 		port = args.length > 0 ? Integer.parseInt(args[0]) : port;
 		server.startServer(port);
 	}
@@ -102,11 +103,11 @@ public class TintolmarketServer implements Serializable {
 					response.message = "O utilizador tem que se autenticar primeiro!";
 					outStream.writeObject(response);
 					close();
-					
+
 				}
 
 				// Check if user exists and password is correct
-				
+
 				response.type = Response.Type.OK;
 				response.message = "OK";
 				if (!UserInfo.authentication(request.user, request.password)) {
@@ -117,7 +118,7 @@ public class TintolmarketServer implements Serializable {
 				}
 
 				// Send response
-				outStream.writeObject(response);				
+				outStream.writeObject(response);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -207,7 +208,6 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.ERROR;
 					response.message = "Esse vinho não existe!";
 				} else {
-					wine.toSell = request.quantity;
 					wine.stock -= request.quantity;
 					wine.price = request.value;
 					response.type = Response.Type.OK;
