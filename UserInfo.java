@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.Hashtable;
 
 class UserInfo{
@@ -83,7 +84,7 @@ class UserInfo{
             System.err.println("User already exists");
             return false;
         }
-        
+
         //write to file
         userTable.put(user, password);
         return writeToFile(user + ":" + password);
@@ -106,15 +107,15 @@ class UserInfo{
         return userTable.get(user.split(":")[0].split(";")[0]);
     }
 
-    private String getBalance(String user){
+/*     private String getBalance(String user){
         return user.split(";")[1];
-    }
+    } */
 
     private String getWines(String user){
         return user.split(";")[2];
     }
 
-    private boolean UserChange(String user,String typeOfChange, String change){
+/*     private boolean UserChange(String user,String typeOfChange, String change){
         //init
         String wines = getWines(user);
         String balance = getBalance(user);
@@ -137,22 +138,22 @@ class UserInfo{
         }
 
         return true;
-    }
+    } */
 
-    
 
-    private String addBalance(String user, String amount) {
+
+/*     private String addBalance(String user, String amount) {
         int balance = Integer.parseInt(getBalance(user));
         balance += Integer.parseInt(amount);
         return Integer.toString(balance);
-    }
+    } */
 
     private String addWine(String user, String wine/*, String image*/) {
         String[] wines = getWines(user).split(",");
         String newWines = "";
         for(String s : wines){
             //if the wine is negative (-VinhaBranco), remove it
-            if(wine.charAt(0) == '-' && s.equals(wine.substring(1))){ 
+            if(wine.charAt(0) == '-' && s.equals(wine.substring(1))){
                 continue;
             }
             newWines += s + ",";
@@ -177,7 +178,7 @@ class UserInfo{
         return newWines;
     }
 
-    public static boolean addWine(String wine_name, String image){
+/*     public static boolean addWine(String wine_name, String image){
         wineTable.put(wine_name, image);
         return writeToFile(wine_name + ":" + image);
     }
@@ -199,18 +200,18 @@ class UserInfo{
         //TODO: check if user has wine
         //TODO: check if wine exists
         //TDOO: check if classification is not null
-        
-    }
 
-    public static getWine(String user, wine){
+    } */
+
+/*     public static getWine(String user, wine){
         //TODO: return wine
-    }
+    } */
 
     /**
      * Tests
      */
     public static void main(String[] args) {
-        //tests
+       /*  //tests
         UserInfo ui = new UserInfo("hi");
         for(String s : userTable.keySet()){
             System.out.println(s + " " + userTable.get(s));
@@ -236,7 +237,7 @@ class UserInfo{
 
         for(String s : userTable.keySet()){
             System.out.println(s + " " + userTable.get(s));
-        }
+        } */
 
         // System.out.println(ui.authentication("user1", "pass1"));  //true
         // System.out.println(ui.authentication("user1", "pass2"));  //false
@@ -250,4 +251,37 @@ class UserInfo{
         // System.out.println(ui.isRegistered("user3"));             //true
         // System.out.println(ui.authentication("user3", "pass3"));  //true
     }
+
+	public static void addWineToUser(String user, String wine/* , Image imagem */){
+		String[] infoUser = Data.readInfoFromFile(user, "users.txt").split(";");
+		System.out.println(infoUser[2]);
+		infoUser[2] = infoUser[2] + "," + wine;
+		System.out.println(infoUser[2]);
+
+		BufferedWriter bw = null;
+		try {
+			bw = new BufferedWriter(new FileWriter("users.txt"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			System.out.println(infoUser.toString());
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < infoUser.length; i++) {
+				sb.append(infoUser[i] + ";");
+			}
+			bw.write(user + ":" + sb.toString());
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	public static int getBalance(String user){
+		String[] userInfo = Data.readInfoFromFile(user, "users.txt").split(";");
+		return Integer.parseInt(userInfo[1]);
+	}
+
+
 }
