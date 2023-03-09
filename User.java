@@ -8,7 +8,7 @@ public class User {
 	private String password;
 	private int balance;
 	private String messages;
-	private String[] wines;
+	private String wines;
 
 	/**
 	 * Creates a new user and authenticates
@@ -46,9 +46,6 @@ public class User {
     }
 
 	// TODO: UPDATE FUNCITONS FOR PROPER USE
-	// private static String getBalance(String user) throws IOException {
-    //     return currentUser.getBalance();
-    // }
 
     // private static String getWines(String user) throws IOException {
     //     return currentUser.getWines();
@@ -78,5 +75,31 @@ public class User {
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
+	}
+
+    public int getBalance() {
+        return balance;
+    }
+
+
+    public boolean sendMessage(String user, String message) {
+        return false;
+    }
+
+	//TODO decide regex for deviding msm
+	public String[] getMSM(){
+		return messages.split("");
+	}
+
+	public String getWines(){
+		return wines;
+	}
+
+	//TODO update updateLine for new standars
+	public boolean buyWine(int wineTotalPrice) {
+		if(balance < wineTotalPrice){
+			return false;
+		}
+		return Data.updateLine(userInfo, newUserInfo, "user.txt");
 	}
 }

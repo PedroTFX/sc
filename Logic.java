@@ -41,35 +41,39 @@ public class Logic {
         return Data.updateLine(allInfo, user + ":" + password + ":" + balance + ":" + vinhos, filename);
     }
 
-    public static boolean buyWine(String seller, String wine, int quantity){
+    public static boolean buyWine(String seller, String wine, int quantity) throws IOException{
         //check if wine is available
-        Data.readWineInfoFromFile(wine);
-        int wineAvailability = Integer.parseInt(Data.readWineInfoFromFile(wine).split(":")[2]);
+        String[] wineInfo = Data.readWineInfoFromFile(wine).split(":");
+        int wineAvailability = Integer.parseInt(wineInfo[1]);
         if(wineAvailability < quantity){
             return false;
         }
 
         //check if user has enough money
-        int winePrice = Integer.parseInt(Data.readWineInfoFromFile(wine).split(":")[3]);
+        int winePrice = Integer.parseInt(wineInfo[3]);
         int wineTotalPrice = winePrice * quantity;
         if(currentUser.getBalance() < wineTotalPrice){
             return false;
         }
 
         //update wine availability and USERS balance
-        return Wine.sellWine(seller, wine, quantity) && User.buyWine(int wineTotalPrice);
+        return currentUser.buyWine(wineTotalPrice) && Wine.boughtWasWine(seller, wine, quantity);
     }
 
     public static String wallet(){
-        return currentUser.getBalance();
+        return String.valueOf(currentUser.getBalance());
     }
 
     public static boolean classify(String wine, int classification){
+        if(classification < 0 && classification > 5){
+            return false;
+        }
         return Wine.classify(wine, classification);
     }
 
-    public static boolean sendMessage(String user, String message){
-        return currentUser.sendMessage(user, message);
+    public static boolean sendMessage(String dest, String message){
+        //TODO seperate list for user search ???
+        return currentUser.sendMessage(dest, message);
     }
 
     public static String[] read(){
@@ -77,24 +81,6 @@ public class Logic {
     }
 
     public static void main(String[] args) {
-        //test register authentication and isRegistered
-        if(!authenticate("user1", "pass1")){ //true
-            System.out.println("authenticate(user1, pass1) failed");  //true
-        }
-        if(authenticate("user1", "pass2")){ //false
-            System.out.println("authenticate(user1, pass2) failed");  //false
-        }
-        if(!authenticate("user2", "pass2")){ //true
-            System.out.println("authenticate(user2, pass2) failed");  //true
-        }
-
-        //test addWine
-        if(!addWine("user1", "vinho1")){ //true
-            System.out.println("addWine(user1, vinho1) failed");  //true
-        }
-        if(!addWine("user1", "vinho2")){ //true
-            System.out.println("addWine(user1, vinho2) failed");  //true
-        }
-
+        
     }
 }
