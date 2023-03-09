@@ -12,66 +12,112 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class Data {
-	public static String readInfoFromFile(String key, String file){
+
+	private static String userfile = "users.txt";
+	private static String wineFile = "wines.txt";
+
+	public static String readUserInfoFromFile(String key) throws IOException{
 		String line = null;
 		BufferedReader br = null;
-		try {
-			br = new BufferedReader(new FileReader(file));
+			br = new BufferedReader(new FileReader(userfile));
 			while ((line = br.readLine()) != null) {
 				String[] userInfo = line.split(":");
 				if (userInfo[0].equals(key)) {
 					br.close();
-					return userInfo[1];
+					return line;
 				}
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
 			br.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		return null;
 	}
 
-	public static void updateLine(String toUpdate, String updated, String file_name) throws IOException {
-		BufferedReader file = new BufferedReader(new FileReader(new File(file_name)));
-		String line;
-		String input = "";
+	
+    public static boolean confirmPassword(String user, String password) throws IOException {
+		return readUserInfoFromFile(user).split(":")[1].equals(password);
+    }
 
-		while ((line = file.readLine()) != null){
-			input += line + "\n";
-		}
-
-		input = input.replace(toUpdate, updated);
-
-		FileOutputStream os = new FileOutputStream(new File(file_name));
-		os.write(input.getBytes());
-
-		file.close();
-		os.close();
+	public static boolean registerUser(String userInfo) {
+		return writeOnFile(userInfo, userfile);
 	}
 
+	public static String readWineInfoFromFile(String key) throws IOException{
+		String line = null;
+		BufferedReader br = null;
+			br = new BufferedReader(new FileReader(wineFile));
+			while ((line = br.readLine()) != null) {
+				String[] userInfo = line.split(":");
+				if (userInfo[0].equals(key)) {
+					br.close();
+					return line;
+				}
+			}
+			br.close();
+		return null;
+	}
+
+	public static boolean updateLine(String toUpdate, String updated, String file_name) {
+		BufferedReader file = null;
+		try {
+			file = new BufferedReader(new FileReader(new File(file_name)));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		String line;
+		String input = "";
+		try {
+			//read file line by line and replace 
+			while ((line = file.readLine()) != null){
+				input += line + "\n";
+			}
+			input = input.replace(toUpdate, updated);
+
+			FileOutputStream os = new FileOutputStream(new File(file_name));
+			os.write(input.getBytes());
+
+			file.close();
+			os.close();
+			return true;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public static boolean writeOnFile(String line, String fileName){
+        BufferedWriter bw = null;
+        try {
+            bw = new BufferedWriter(new FileWriter(fileName,true));
+            bw.write(line);
+            // Revoke newLine() method
+            bw.newLine();
+            bw.close();
+			return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+			return false;
+        }
+    }
 	/**
 	 *
 	 * TESTES
 	 * @param args
+	 * @throws IOException
 	 */
-	public static void main(String[] args) {
-		String line0 = readInfoFromFile("user2", "users.txt");
+	public static void main(String[] args) throws IOException {
+		String line0 = readUserInfoFromFile("user2");
 
-		String line = readInfoFromFile("user1", "users.txt");
+		String line = readUserInfoFromFile("user1");
 
-		String line2 = readInfoFromFile("user2", "users.txt");
+		String line2 = readUserInfoFromFile("user2");
 
-		String line3 = readInfoFromFile("user", "users.txt");
+		String line3 = readUserInfoFromFile("user");
 
-		String line4 = readInfoFromFile("user10", "users.txt");
+		String line4 = readUserInfoFromFile("user10");
 
-		String line5 = readInfoFromFile("user2", "users.txt");
+		String line5 = readUserInfoFromFile("user2");
 
 		System.out.println(line0);
 		System.out.println(line);
@@ -82,17 +128,17 @@ public class Data {
 
 		System.out.println("VINHOS");
 
-		String wine0 = readInfoFromFile("wine", "wines.txt");
+		String wine0 = readWineInfoFromFile("wine");
 
-		String wine = readInfoFromFile("wine1", "wines.txt");
+		String wine = readWineInfoFromFile("wine1");
 
-		String wine2 = readInfoFromFile("sporting", "wines.txt");
+		String wine2 = readWineInfoFromFile("sporting");
 
-		String wine3 = readInfoFromFile("portinho", "wines.txt");
+		String wine3 = readWineInfoFromFile("portinho");
 
-		String wine4 = readInfoFromFile("benfica", "wines.txt");
+		String wine4 = readWineInfoFromFile("benfica");
 
-		String wine5 = readInfoFromFile("wine2", "wines.txt");
+		String wine5 = readWineInfoFromFile("wine2");
 
 		System.out.println(wine0);
 		System.out.println(wine);
@@ -105,7 +151,7 @@ public class Data {
 
 
 		try {
-			updateLine("wine1:" + readInfoFromFile("wine1", "wines.txt"), "gil_vicente", "wines.txt");
+			updateLine("wine1:" + readWineInfoFromFile("wine1"), "gil_vicente", wineFile);
 
 			Charset charset = StandardCharsets.UTF_8;
 			String content = new String(Files.readAllBytes(Paths.get("wines.txt")), charset);
@@ -118,16 +164,12 @@ public class Data {
 
 
 	}
-	public static void writeOnFile(String line, String fileName/* , Image imagem */){
-		BufferedWriter bw = null;
-		try {
-			bw = new BufferedWriter(new FileWriter(fileName));
-			bw.write(line);
-			bw.write("\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+
+
+
+
+
+	
 }
 
 

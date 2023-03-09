@@ -14,11 +14,7 @@ public class WineInfo {
 	public static void classifyWine(String wine, int review){
 		String wineInfo = Data.readInfoFromFile(wine, "wines.txt");
 		String reviews = wineInfo.split(";")[2];
-		try {
-			Data.updateLine(wine + ":" + wineInfo, wine + builTxtLine(wine, wineInfo.split(";"), reviews, 2), "wines.txt");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		Data.updateLine(wine + ":" + wineInfo, wine + builTxtLine(wine, wineInfo.split(";"), reviews, 2), "wines.txt");
 	}
 
 	private static String builTxtLine(String wine, String[] wineInfo, String infoToChange, int indexToChange){
@@ -50,11 +46,7 @@ public class WineInfo {
 		String wineInfo = Data.readInfoFromFile(wine, "wines.txt");
 		String[] attributes = wineInfo.split(";");
 		String lineToWrite = builTxtLine(wine, attributes, String.valueOf(quantity), 1);
-		try {
-			Data.updateLine(wine + ":" + wineInfo, wine + ":" + lineToWrite, "wines.txt");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		Data.updateLine(wine + ":" + wineInfo, wine + ":" + lineToWrite, "wines.txt");
 	}
 
 }

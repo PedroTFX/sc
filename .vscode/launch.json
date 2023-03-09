@@ -12,10 +12,24 @@
 			"projectName": "sc_1c260985"
 		},
 		{
+			"type": "java",
+			"name": "Logic",
+			"request": "launch",
+			"mainClass": "Logic",
+			"projectName": "sc_8e25e32a"
+		},
+		{
 			"name": "Client",
 			"type": "java",
 			"request": "launch",
 			"mainClass": "UserInfo",
+			"args": "127.0.0.1:12345 userqualquer"
+		},
+		{
+			"name": "User",
+			"type": "java",
+			"request": "launch",
+			"mainClass": "User",
 			"args": "127.0.0.1:12345 userqualquer"
 		},
 		{
