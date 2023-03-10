@@ -1,10 +1,11 @@
 import java.io.IOException;
+import java.util.Hashtable;
 
 public class Logic {
 
     private static String filename = "users.txt";
     private static User currentUser = null;
-    
+
     public User autheticate(String user , String password) throws IOException{
         return (currentUser = new User(user, password));
     }
@@ -64,7 +65,7 @@ public class Logic {
         return String.valueOf(currentUser.getBalance());
     }
 
-    public static boolean classify(String wine, int classification){
+    public static boolean classify(String wine, int classification) throws IOException{
         if(classification < 0 && classification > 5){
             return false;
         }
@@ -81,6 +82,30 @@ public class Logic {
     }
 
     public static void main(String[] args) {
-        
+
     }
+
+	public static boolean sellWine(String userId, String wine, int quantity) {
+		return false;
+	}
+
+	public static boolean viewWine(String wine) {
+		return false;
+	}
+
+	public static String getSeller(String wine) {
+		return null;
+	}
+
+	public static int averageWineClasification(String wine) {
+		return 0;
+	}
+
+	public static boolean sendMessage(String userId, String user, String message) {
+		return false;
+	}
+
+	public static Hashtable<String, String[]> getMessage(String userId) {
+		return null;
+	}
 }
