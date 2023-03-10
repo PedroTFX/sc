@@ -42,9 +42,10 @@ public class Logic {
         return Data.updateLine(allInfo, user + ":" + password + ":" + balance + ":" + vinhos, filename);
     }
 
+    //TODO the wine list must have a way to find the wine by seller
     public static boolean buyWine(String seller, String wine, int quantity) throws IOException{
         //check if wine is available
-        String[] wineInfo = Data.readWineInfoFromFile(wine).split(":");
+        String[] wineInfo = Data.readWineInfoFromFile(wine + ";" + seller).split(":");
         int wineAvailability = Integer.parseInt(wineInfo[1]);
         if(wineAvailability < quantity){
             return false;
@@ -56,6 +57,14 @@ public class Logic {
         if(currentUser.getBalance() < wineTotalPrice){
             return false;
         }
+
+        //Atomic transaction
+        //update wine seller balance
+        String safeGuard = currentUser.toString();
+        if(currentUser.updateUser(wine, seller, wineTotalPrice, wine)){
+            
+        }
+        
 
         //update wine availability and USERS balance
         return currentUser.buyWine(wineTotalPrice) && Wine.boughtWasWine(seller, wine, quantity);

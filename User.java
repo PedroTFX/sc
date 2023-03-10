@@ -95,11 +95,7 @@ public class User {
 		return wines;
 	}
 
-	//TODO update updateLine for new standars
-	public boolean buyWine(int wineTotalPrice) {
-		if(balance < wineTotalPrice){
-			return false;
-		}
-		return Data.updateLine(userInfo, newUserInfo, "user.txt");
+	public boolean updateUser(String user, String password, int balance, String wines) throws IOException {
+		return Data.updateLineUsers(this.id + ":" + this.password + ":" + this.balance + ":" + this.wines, user + ":" + password + ":" + balance + ":" + wines);
 	}
 }
