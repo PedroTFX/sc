@@ -3,7 +3,6 @@ import java.util.Hashtable;
 
 public class Logic {
 
-    private static String filename = "users.txt";
     private static User currentUser = null;
 
     public User autheticate(String user , String password) throws IOException{
@@ -27,10 +26,7 @@ public class Logic {
      */
     public static boolean sell(String userId, String wine, int quantity) {
         //checkif wine exists
-        if(!Wine.wineExists(wine)){
-            return false;
-        }
-        if(quantity < 0){
+        if(!Wine.wineExists(wine) || quantity < 0){
             return false;
         }
 		return Listings.addListing(userId, wine, quantity);
@@ -45,7 +41,7 @@ public class Logic {
      * @return
      */
     public static String view(String wine) {
-		return Wine.getWine(wine);
+		return (!Wine.wineExists(wine)) ? null : Wine.getWine(wine) + "\n" + Listings.getListing(wine);
 	}
 
     //TODO the wine list must have a way to find the wine by seller
@@ -62,30 +58,7 @@ public class Logic {
      * @throws IOException
      */
     public static boolean buy(String seller, String wine, int quantity) throws IOException{
-        //check if wine is available
-        String[] wineInfo = Data.readWineInfoFromFile(wine + ";" + seller).split(":");
-        int wineAvailability = Integer.parseInt(wineInfo[1]);
-        if(wineAvailability < quantity){
-            return false;
-        }
-
-        //check if user has enough money
-        int winePrice = Integer.parseInt(wineInfo[3]);
-        int wineTotalPrice = winePrice * quantity;
-        if(currentUser.getBalance() < wineTotalPrice){
-            return false;
-        }
-
-        //Atomic transaction
-        //update wine seller balance
-        String safeGuard = currentUser.toString();
-        if(currentUser.updateUser(wine, seller, wineTotalPrice, wine)){
-            
-        }
-        
-
-        //update wine availability and USERS balance
-        return currentUser.buyWine(wineTotalPrice) && Wine.boughtWasWine(seller, wine, quantity);
+        return Listings.available(seller, wine, quantity) && User.buy(quantity, Listings.getPrice(seller, wine) && Listings.removeListing(seller, wine, quantity));
     }
 
     /**
@@ -105,7 +78,7 @@ public class Logic {
      * @throws IOException
      */
     public static boolean classify(String wine, int classification) throws IOException{
-        if(classification < 0 && classification > 5){
+        if(classification < 0 || classification > 5){
             return false;
         }
         return Wine.classify(wine, classification);
@@ -121,7 +94,7 @@ public class Logic {
      */
     public static boolean talk(String dest, String message){
         //TODO seperate list for user search ???
-        return currentUser.sendMessage(dest, message);
+        return MsmContainer.sendMessage(dest, message);
     }
 
     /**
@@ -131,6 +104,6 @@ public class Logic {
      * @return
      */
     public static String[] read(){
-        return currentUser.getMSM();
+        return MsmContainer.getMSM(currentUser);
     }
 }
