@@ -10,40 +10,58 @@ public class Logic {
         return (currentUser = new User(user, password));
     }
 
+    /*
+     * add <wine> <image> - adiciona um novo vinho identificado por wine, associado à imagem 
+     * image.    Caso  já  exista  um  vinho  com  o  mesmo  nome  deve  ser  devolvido  um  erro. 
+     * Inicialmente o vinho não terá qualquer classificação e o número de unidades disponíveis 
+     * será zero.
+     */
+    public static boolean add(String wine, String image) throws IOException{
+        return Wine.addWine(wine, image);
+    }
+
+    /*
+     * sell  <wine>  <value>  <quantity>  -  coloca  à  venda  o  número  indicado  por  quantity  de 
+     * unidades do vinho wine pelo valor value. Caso o wine não exista, deve ser devolvido um 
+     * erro.
+     */
+    public static boolean sell(String userId, String wine, int quantity) {
+        //checkif wine exists
+        if(!Wine.wineExists(wine)){
+            return false;
+        }
+        if(quantity < 0){
+            return false;
+        }
+		return Listings.addListing(userId, wine, quantity);
+	}
+
     /**
-     * Adds a wine to the user's wine list
-     * Returns true if it was possible to add the wine
-     * user1:pass1:0:vinho1,vinho2
-     * @param user
+     * Obtém as informações associadas ao vinho identificado por wine, 
+     * nomeadamente  a  imagem  associada,  a  classificação  média  e,  caso  existam  unidades  do 
+     * vinho  disponíveis  para  venda,  a  indicação  do  utilizador  que  as  disponibiliza,  o  preço  e  a 
+     * quantidade disponível. Caso o vinho wine não exista, deve ser devolvido um erro.
      * @param wine
      * @return
      */
-    public static boolean addWine(String user, String wine){
-        //read user info from file and init
-        String allInfo = currentUser.getWines();
-        String[] userInfo = allInfo.split(":");
-        String password = userInfo[1];
-        int balance = Integer.parseInt(userInfo[2]);
-        String vinhos = userInfo[3] == null ? "" : userInfo[3];
-
-        //update user wines info
-        boolean hasWine = false;
-        for (String vinho : vinhos) {
-            if(vinho.equals(wine)){
-                hasWine = true;
-                break;
-            }
-        }
-
-        vinhos = vinhos.equals("") && !hasWine ? wine : vinhos + "," + wine;
-        //TODO ADD TO THE WINE TXT FILE
-
-        //write to file
-        return Data.updateLine(allInfo, user + ":" + password + ":" + balance + ":" + vinhos, filename);
-    }
+    public static String view(String wine) {
+		return Wine.getWine(wine);
+	}
 
     //TODO the wine list must have a way to find the wine by seller
-    public static boolean buyWine(String seller, String wine, int quantity) throws IOException{
+    /**
+     * buy <wine> <seller> <quantity> - compra quantity unidades do vinho wine ao utilizador 
+     * seller. O número de unidades deve ser removido da quantidade disponível e deve ser 
+     * transferido o valor correspondente à compra da conta do comprador para o vendedor. 
+     * Caso o vinho não exista, ou não existam unidades suficientes, ou o comprador não tenha 
+     * saldo suficiente, deverá ser devolvido e assinalado o erro correspondente.
+     * @param seller
+     * @param wine
+     * @param quantity
+     * @return
+     * @throws IOException
+     */
+    public static boolean buy(String seller, String wine, int quantity) throws IOException{
         //check if wine is available
         String[] wineInfo = Data.readWineInfoFromFile(wine + ";" + seller).split(":");
         int wineAvailability = Integer.parseInt(wineInfo[1]);
@@ -70,10 +88,22 @@ public class Logic {
         return currentUser.buyWine(wineTotalPrice) && Wine.boughtWasWine(seller, wine, quantity);
     }
 
+    /**
+     * obtém o saldo atual da carteira do utilizador
+     * @return
+     */
     public static String wallet(){
         return String.valueOf(currentUser.getBalance());
     }
 
+    /**
+     * Atribui ao vinho wine uma classificação de 1 a 5, indicada por stars. 
+     * Caso o vinho wine não exista, deve ser devolvido um erro
+     * @param wine
+     * @param classification
+     * @return
+     * @throws IOException
+     */
     public static boolean classify(String wine, int classification) throws IOException{
         if(classification < 0 && classification > 5){
             return false;
@@ -81,40 +111,26 @@ public class Logic {
         return Wine.classify(wine, classification);
     }
 
-    public static boolean sendMessage(String dest, String message){
+    /**
+     * Permite  enviar  uma  mensagem  privada  ao  utilizador  user  (por 
+     * exemplo, uma pergunta relativa a um vinho à venda). Caso o utilizador não exista, deve 
+     * ser devolvido um erro. 
+     * @param dest
+     * @param message
+     * @return
+     */
+    public static boolean talk(String dest, String message){
         //TODO seperate list for user search ???
         return currentUser.sendMessage(dest, message);
     }
 
+    /**
+     * Permite ler as novas mensagens recebidas. Deve ser apresentada a identificação do 
+     * remetente e a respetiva mensagem. As mensagens são removidas da caixa de mensagens 
+     * do servidor depois de serem lidas. 
+     * @return
+     */
     public static String[] read(){
         return currentUser.getMSM();
     }
-
-    public static void main(String[] args) {
-
-    }
-
-	public static boolean sellWine(String userId, String wine, int quantity) {
-		return false;
-	}
-
-	public static boolean viewWine(String wine) {
-		return false;
-	}
-
-	public static String getSeller(String wine) {
-		return null;
-	}
-
-	public static int averageWineClasification(String wine) {
-		return 0;
-	}
-
-	public static boolean sendMessage(String userId, String user, String message) {
-		return false;
-	}
-
-	public static Hashtable<String, String[]> getMessage(String userId) {
-		return null;
-	}
 }
