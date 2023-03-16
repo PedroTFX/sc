@@ -85,7 +85,11 @@ public class User {
 		return Data.updateLineUsers(this.id + ":" + this.password + ":" + this.balance + ":" + this.wines, user + ":" + password + ":" + balance + ":" + wines);
 	}
 
-	public static boolean buy(int quantity, boolean b) {
+	public static boolean buy(int quantity, int i) {
 		return false;
 	}
+
+    public String getId() {
+        return id;
+    }
 }

@@ -28,7 +28,7 @@ public class Listings {
     }
 
     public static int getPrice(String seller, String wine) {
-        return Integer.parseInt(wineListings.get(seller + ":" + wine)));
+        return Integer.parseInt(wineListings.get(seller + ":" + wine));
     }
 
     /**

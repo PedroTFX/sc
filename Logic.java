@@ -58,7 +58,8 @@ public class Logic {
      * @throws IOException
      */
     public static boolean buy(String seller, String wine, int quantity) throws IOException{
-        return Listings.available(seller, wine, quantity) && User.buy(quantity, Listings.getPrice(seller, wine)) && Listings.removeListing(seller, wine, quantity);
+        
+        return Listings.available(seller, wine, quantity) && User.buy(quantity, Listings.getPrice(seller, wine)) && Listings.buyListing(seller, wine, quantity);
     }
 
     /**
@@ -94,7 +95,7 @@ public class Logic {
      */
     public static boolean talk(String dest, String message){
         //TODO seperate list for user search ???
-        return MsmContainer.sendMessage(dest, message);
+        return MsmContainer.sendMessage(currentUser.getId(), dest, message);
     }
 
     /**
