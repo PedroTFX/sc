@@ -58,7 +58,7 @@ public class Logic {
      * @throws IOException
      */
     public static boolean buy(String seller, String wine, int quantity) throws IOException{
-        return Listings.available(seller, wine, quantity) && User.buy(quantity, Listings.getPrice(seller, wine) && Listings.removeListing(seller, wine, quantity));
+        return Listings.available(seller, wine, quantity) && User.buy(quantity, Listings.getPrice(seller, wine)) && Listings.removeListing(seller, wine, quantity);
     }
 
     /**

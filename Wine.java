@@ -1,37 +1,39 @@
 import java.io.IOException;
 
 public class Wine {
-	private static final int QUANTITY = 2;
-	private static final int BALANCE = 2;
-	private static final int VALUE = 1;
+
 	String name;
 	String image;
 	int stock;
 	int price;
 
-	public Wine(String name, String image, String seller) {
+	public Wine(String name, String image) {
+		if(wineExists(name)){
+			return;
+		}
 		this.name = name;
 		this.image = image;
 		stock = price = 0;
+		
 	}
 
 	public String toString() {
-		return String.format("%s | %s | %d | %d | %s", name, image, stock, price);
+		return String.format("%s | %s | %d", name, image);
 	}
 
-	public static boolean boughtWasWine(String seller, String wine, int quantity) throws IOException {
-		String wineInfo = Data.readWineInfoFromFile(wine);
-		System.out.println(wineInfo);
-		String userInfo = Data.readUserInfoFromFile(seller);
-		System.out.println(userInfo);
-		String[] userTokens = userInfo.split(":");
-		String[] wineTokens = wineInfo.split(":");
-		wineTokens[QUANTITY] = String.valueOf(Integer.parseInt(wineTokens[QUANTITY]) - quantity);
-		userTokens[BALANCE] = String.valueOf(Integer.parseInt(userTokens[BALANCE]) - Integer.parseInt(wineTokens[VALUE]) * quantity);
-		String newWineLine = String.join(":", wineTokens);
-		String newUserLine = String.join(":", userTokens);
-		return Data.updateLineWines(wineInfo, newWineLine) && Data.updateLineUsers(userInfo, newUserLine);
-	}
+	// public static boolean boughtWasWine(String seller, String wine, int quantity) throws IOException {
+	// 	String wineInfo = Data.readWineInfoFromFile(wine);
+	// 	System.out.println(wineInfo);
+	// 	String userInfo = Data.readUserInfoFromFile(seller);
+	// 	System.out.println(userInfo);
+	// 	String[] userTokens = userInfo.split(":");
+	// 	String[] wineTokens = wineInfo.split(":");
+	// 	wineTokens[QUANTITY] = String.valueOf(Integer.parseInt(wineTokens[QUANTITY]) - quantity);
+	// 	userTokens[BALANCE] = String.valueOf(Integer.parseInt(userTokens[BALANCE]) - Integer.parseInt(wineTokens[VALUE]) * quantity);
+	// 	String newWineLine = String.join(":", wineTokens);
+	// 	String newUserLine = String.join(":", userTokens);
+	// 	return Data.updateLineWines(wineInfo, newWineLine) && Data.updateLineUsers(userInfo, newUserLine);
+	// }
 
 	public static boolean classify(String wine, int classification) throws IOException {
 		String info = Data.readWineInfoFromFile(wine);
@@ -55,4 +57,16 @@ public class Wine {
 			System.out.println("TRRRRRINTAAAAAAA");
 		}
 	}
+
+    public static boolean addWine(String wine, String image2) {
+        return false;
+    }
+
+    public static boolean wineExists(String wine) {
+        return false;
+    }
+
+    public static String getWine(String wine) {
+        return null;
+    }
 }

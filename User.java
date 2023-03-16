@@ -31,7 +31,7 @@ public class User {
 	}
 
 	public String toString() {
-		return String.format("%s | %s | %s | %d | %s", id, password, balance, wines, messages);
+		return String.format("%s | %s | %s", id, password, balance);
 	}
 
 	/*
@@ -42,7 +42,7 @@ public class User {
         if(Data.readUserInfoFromFile(user) != null){
             return Data.confirmPassword(user, password);
         }
-        return Data.registerUser(user + ":" + password + ":" + 0 + ":" + "");
+        return Data.registerUser(user + ":" + password + ":" + 0);
     }
 
 	// TODO: UPDATE FUNCITONS FOR PROPER USE
@@ -81,21 +81,11 @@ public class User {
         return balance;
     }
 
-
-    public boolean sendMessage(String user, String message) {
-        return false;
-    }
-
-	//TODO decide regex for deviding msm
-	public String[] getMSM(){
-		return messages.split("");
-	}
-
-	public String getWines(){
-		return wines;
-	}
-
 	public boolean updateUser(String user, String password, int balance, String wines) throws IOException {
 		return Data.updateLineUsers(this.id + ":" + this.password + ":" + this.balance + ":" + this.wines, user + ":" + password + ":" + balance + ":" + wines);
+	}
+
+	public static boolean buy(int quantity, boolean b) {
+		return false;
 	}
 }
