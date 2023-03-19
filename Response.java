@@ -3,10 +3,11 @@ import java.util.Hashtable;
 
 public class Response implements Serializable {
 	enum Type {
-		OK, ERROR
+		OK, ERROR, VIEW
 	}
 
 	Type type;
+	String wine;
 	String message;
 	String image;
 	int averageWineClassification;
