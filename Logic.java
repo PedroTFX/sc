@@ -14,8 +14,8 @@ public class Logic {
      * Inicialmente o vinho não terá qualquer classificação e o número de unidades disponíveis
      * será zero.
      */
-    public static boolean addWine(String wine, String image) throws IOException{
-        return Wine.addWine(wine, image);
+    public static boolean addWine(String wine) throws IOException{
+        return Wine.addWine(wine);
     }
 
     /*
