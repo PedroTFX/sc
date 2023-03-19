@@ -38,11 +38,14 @@ public class User {
      * Returns if the user and the password are a match
      * If the user is not registered, register
      */
-    public static boolean authenticate(String user, String password) throws IOException{
+    public boolean authenticate(String user, String password) throws IOException{
+		if(user == null || password == null){
+			return false;
+		}
         if(Data.readUserInfoFromFile(user) != null){
             return Data.confirmPassword(user, password);
         }
-        return Data.registerUser(user + ":" + password + ":" + 0);
+        return Data.registerUser(user + ":" + password + ":" + 200);
     }
 
 	// TODO: UPDATE FUNCITONS FOR PROPER USE
@@ -92,4 +95,8 @@ public class User {
     public String getId() {
         return id;
     }
+
+	public String getPass(){
+		return password;
+	}
 }

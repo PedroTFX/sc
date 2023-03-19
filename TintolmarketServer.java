@@ -69,7 +69,7 @@ public class TintolmarketServer implements Serializable {
 			listen();
 
 			// Close socket and thread
-			close();
+			// closeServer();
 		}
 
 		private void init() {
@@ -92,22 +92,33 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.ERROR;
 					response.message = "O utilizador tem que se autenticar primeiro!";
 					outStream.writeObject(response);
-					close();
+					closeServer();
 				}
 
 				userId = request.user;
-				response.type = Response.Type.OK;
-				response.message = "OK";
-				// Check if user exists and password is correct
+				User user = new User(request.user, request.password);
+				if(user.authenticate(user.getId(), user.getPass())){
+					response.type = Response.Type.OK;
+					response.message = "OK";
+					// Send response
+					outStream.writeObject(response);
+				} else{
+					response.type = Response.Type.ERROR;
+					response.message = "Combinação userID/password incorreta";
+					//closeServer();
+					outStream.writeObject(response);
+					socket.close();
+				}
+				/* 				// Check if user exists and password is correct
 				if (!Data.confirmPassword(userId, request.password)) {
 					response.type = Response.Type.ERROR;
 					response.message = "Combinação userID/password incorreta";
 					outStream.writeObject(response);
 					close();
-				}
+				} */
 
 				// Send response
-				outStream.writeObject(response);
+				// outStream.writeObject(response);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -161,7 +172,8 @@ public class TintolmarketServer implements Serializable {
 				// Create response
 				response.type = Response.Type.OK;
 
-			} /*
+			}
+			/*
 				 * else if (request.operation == Request.Operation.SELL) {
 				 * boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
 				 * if (!exists) {
@@ -225,7 +237,7 @@ public class TintolmarketServer implements Serializable {
 			return response;
 		}
 
-		private void close() {
+		private void closeServer() {
 			try {
 				socket.close();
 			} catch (IOException e) {
