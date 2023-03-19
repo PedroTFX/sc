@@ -1,3 +1,5 @@
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -51,8 +53,8 @@ public class Tintolmarket implements Serializable {
 	private void initializeServerConnection(String host, int port) {
 		try {
 			clientSocket = new Socket(host, port);
-			in = new ObjectInputStream(clientSocket.getInputStream());
 			out = new ObjectOutputStream(clientSocket.getOutputStream());
+			in = new ObjectInputStream(clientSocket.getInputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -94,9 +96,19 @@ public class Tintolmarket implements Serializable {
 				// Send request to server
 				out.writeObject(request);
 
+				if (request.operation == Request.Operation.ADD) {
+					BufferedImage image = WineImage.readImageFromDisk(WineImage.getImagePath(request.image));
+					WineImage.sendImage(image, out);
+				}
+
 				// Receive response from server
 				Response response = (Response) in.readObject();
 
+				if(response.type == Response.Type.VIEW){
+					BufferedImage image = WineImage.readImageFromNetwork(in);
+					File folder = WineImage.createFolder("client");
+					WineImage.writeImageToFile(folder, image, "jpg");
+				}
 				// Print response
 				System.out.println(response);
 			} catch (Exception e) {
@@ -189,21 +201,29 @@ public class Tintolmarket implements Serializable {
 		 */
 	}
 
+/* 	private static BufferedImage readImageFromNetwork(ObjectInputStream in) throws Exception {
+		return ImageIO.read(new ByteArrayInputStream((byte[]) in.readObject()));
+	} */
+
 	private Request readRequest() {
 		String line = sc.nextLine();
 		String[] tokens = line.split(" ");
 		String operation = tokens[0];
 
-		/* interface CreateRequest {
-			Request get(String[] tokens);
-		}
-
-		CreateRequest[] requests = new CreateRequest[] {
-			new CreateRequest() { public Request get(String[] tokens) { return createAddRequest(tokens); }},
-			new CreateRequest() { public Request get(String[] tokens) { return createSellRequest(tokens); }},
-		};
-
-		return requests[0].get(tokens); */
+		/*
+		 * interface CreateRequest {
+		 * Request get(String[] tokens);
+		 * }
+		 *
+		 * CreateRequest[] requests = new CreateRequest[] {
+		 * new CreateRequest() { public Request get(String[] tokens) { return
+		 * createAddRequest(tokens); }},
+		 * new CreateRequest() { public Request get(String[] tokens) { return
+		 * createSellRequest(tokens); }},
+		 * };
+		 *
+		 * return requests[0].get(tokens);
+		 */
 
 		if (operation.equals("add") || operation.equals("a")) {
 			return createAddRequest(tokens);
@@ -303,7 +323,12 @@ public class Tintolmarket implements Serializable {
 		}
 		String wine = tokens[1];
 		String image = tokens[2];
-		return Request.createAddOperation(wine, image);
+		try {
+			return Request.createAddOperation(wine, image);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	private Request createSellRequest(String[] tokens) {
