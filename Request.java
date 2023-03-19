@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.io.Serializable;
 
 public class Request implements Serializable {
@@ -15,23 +16,24 @@ public class Request implements Serializable {
 	}
 
 	Operation operation;
-	
-	String wine;
 	String image;
+	String wine;
 	int value;
 	int quantity;
 	String seller;
 	int stars;
 
-	
 	String user;
 	String password;
 	String message;
 
-	public String toString() {
-		return String.format("%s | %s | %s | %d | %d | %s | %d | %s | %s | %s", operation, wine, image, value, quantity,
-				seller, stars, user, password, message);
-	}
+	/*
+	 * public String toString() {
+	 * return String.format("%s | %s | %s | %d | %d | %s | %d | %s | %s | %s",
+	 * operation, wine, image, value, quantity, seller, stars, user, password,
+	 * message);
+	 * }
+	 */
 
 	private Request(Operation operation) {
 		this.operation = operation;
@@ -44,7 +46,7 @@ public class Request implements Serializable {
 		return authenticate;
 	}
 
-	static public Request createAddOperation(String wine, String image) {
+	static public Request createAddOperation(String wine, String image) throws IOException {
 		Request add = new Request(Operation.ADD);
 		add.wine = wine;
 		add.image = image;
