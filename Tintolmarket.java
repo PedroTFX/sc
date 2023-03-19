@@ -202,10 +202,6 @@ public class Tintolmarket implements Serializable {
 		 */
 	}
 
-/* 	private static BufferedImage readImageFromNetwork(ObjectInputStream in) throws Exception {
-		return ImageIO.read(new ByteArrayInputStream((byte[]) in.readObject()));
-	} */
-
 	private Request readRequest() {
 		String line = sc.nextLine();
 		String[] tokens = line.split(" ");

@@ -154,22 +154,26 @@ public class TintolmarketServer implements Serializable {
 				BufferedImage image = WineImage.readImageFromNetwork(inStream);
 
 				// Check if wine already exists
-				boolean alreadyExists = Logic.addWine(userId, request.wine);
-				if (alreadyExists) {
+
+				boolean alreadyExists = Logic.addWine(request.wine);
+
+				if (!alreadyExists) {
 					response.type = Response.Type.ERROR;
 					response.message = "Esse vinho já existe!";
 					return response;
+				} else {
+
+
+					// Everything OK, save image to disk
+					File folder = WineImage.createFolder();
+					String[] imageTokens = request.image.split("\\.");
+					String extension = imageTokens[imageTokens.length - 1];
+					String wineImageName = WineImage.writeImageToFile(folder, image, extension);
+					String updatedLine = request.wine + ":" + wineImageName;
+
+					// Save wine name and image name to Database
+					Data.updateImageWineFile(null, updatedLine);
 				}
-
-				// Everything OK, save image to disk
-				File folder = WineImage.createFolder();
-				String[] imageTokens = request.image.split("\\.");
-				String extension = imageTokens[imageTokens.length - 1];
-				String wineImageName = WineImage.writeImageToFile(folder, image, extension);
-				String updatedLine = request.wine + ":" + wineImageName;
-
-				// Save wine name and image name to Database
-				Data.updateImageWineFile(null, updatedLine);
 				// Create response
 				response.type = Response.Type.OK;
 
