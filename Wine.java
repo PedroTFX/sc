@@ -14,7 +14,6 @@ public class Wine {
 		this.name = name;
 		this.image = image;
 		stock = price = 0;
-
 	}
 
 	public String toString() {
@@ -50,22 +49,27 @@ public class Wine {
 		return Data.updateLineWines(info, newLine);
 	}
 
-	public static void main(String[] args) throws IOException {
-		/*
-		 * boolean boughtWasWine = boughtWasWine("user", "porto", 1);
-		 * if (boughtWasWine) {
-		 * System.out.println("TRINTA!!!");
-		 * }
-		 */
+/* 	public static void main(String[] args) throws IOException {
+
+		 boolean boughtWasWine = boughtWasWine("user", "porto", 1);
+		 	if (boughtWasWine) {
+		 	System.out.println("TRINTA!!!");
+		 }
+
 
 		boolean classify = classify("porto", 4);
 		if (classify) {
 			System.out.println("TRRRRRINTAAAAAAA");
 		}
 	}
+ */
 
-	public static boolean addWine(String wine, String image2) {
-		return false;
+ 	public static boolean addWine(String wine) throws IOException {
+		String wineInfo = Data.readWineInfoFromFile(wine);
+		if (wineInfo != null){
+			return false;
+		}
+		return Data.writeOnFile(wine, Data.WINE_FILE);
 	}
 
 	public static boolean wineExists(String wine) {
