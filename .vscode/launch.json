@@ -22,8 +22,8 @@
 			"name": "Client",
 			"type": "java",
 			"request": "launch",
-			"mainClass": "UserInfo",
-			"args": "127.0.0.1:12345 userqualquer"
+			"mainClass": "Tintolmarket",
+			"args": "127.0.0.1:12345 joao andre"
 		},
 		{
 			"name": "User",
