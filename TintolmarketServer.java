@@ -134,11 +134,11 @@ public class TintolmarketServer implements Serializable {
 
 					if (response.type == Response.Type.VIEW) {
 						// Ir à DB ler o nome da imagem deste vinho no disco
-						String wineImageName = "portao.jpg"; // getWineImageName();
+						String wineImageName = Data.readImageNameFromWineImageFile(request.wine);
 						// Ler imagem do disco
-						BufferedImage image = WineImage.readImageFromDisk(WineImage.getImagePath("portao.jpg"));
+						BufferedImage image = WineImage.readImageFromDisk(WineImage.getImagePath("server-images\\" + wineImageName));
 						// Enviar imagem pela rede
-						WineImage.sendImage(image, outStream);
+						WineImage.sendImage(image, outStream, wineImageName);
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();
@@ -166,9 +166,10 @@ public class TintolmarketServer implements Serializable {
 				String[] imageTokens = request.image.split("\\.");
 				String extension = imageTokens[imageTokens.length - 1];
 				String wineImageName = WineImage.writeImageToFile(folder, image, extension);
+				String updatedLine = request.wine + ":" + wineImageName;
 
 				// Save wine name and image name to Database
-
+				Data.updateImageWineFile(null, updatedLine);
 				// Create response
 				response.type = Response.Type.OK;
 
@@ -187,18 +188,27 @@ public class TintolmarketServer implements Serializable {
 				String exists = Logic.viewWine(request.wine);
 				exists = "porto";
 				// nao apagar!!!!!!!!!!!!
-				/*
-				 * if (exists == null) {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "Este vinho nao existe";
-				 * }
-				 */
+
+				/* if (exists == null) {
+					response.type = Response.Type.ERROR;
+					response.message = "Este vinho nao existe";
+				} */
+
 				// nao apagar!!!!!!!!!!!!!
 				// response.seller = Logic.getSeller(request.wine);
 				// response.averageWineClassification =
 				// Logic.averageWineClasification(request.wine);
-				response.type = Response.Type.OK;
+
+
+				String wineImageNameToSend = Data.readImageNameFromWineImageFile(exists);
+				System.out.println(wineImageNameToSend);
+				/* BufferedImage image = WineImage.readImageFromDisk("server-images\\" + wineImageNameToSend);
+				WineImage.sendImage(image, outStream, wineImageNameToSend); */
+
+
+				response.type = Response.Type.VIEW;
 				response.wine = request.wine;
+				response.image = wineImageNameToSend;
 			} /*
 				 * else if (request.operation == Request.Operation.WALLET) {
 				 * response.type = Response.Type.OK;

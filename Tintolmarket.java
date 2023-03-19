@@ -98,7 +98,7 @@ public class Tintolmarket implements Serializable {
 
 				if (request.operation == Request.Operation.ADD) {
 					BufferedImage image = WineImage.readImageFromDisk(WineImage.getImagePath(request.image));
-					WineImage.sendImage(image, out);
+					WineImage.sendImage(image, out, request.image);
 				}
 
 				// Receive response from server
@@ -106,9 +106,10 @@ public class Tintolmarket implements Serializable {
 
 				if(response.type == Response.Type.VIEW){
 					BufferedImage image = WineImage.readImageFromNetwork(in);
-					File folder = WineImage.createFolder("client");
-					WineImage.writeImageToFile(folder, image, "jpg");
+					File folder = WineImage.createFolder("client-images");
+					WineImage.writeImageToFile(folder, image, WineImage.getImageExtension(response.image));
 				}
+
 				// Print response
 				System.out.println(response);
 			} catch (Exception e) {
@@ -209,21 +210,6 @@ public class Tintolmarket implements Serializable {
 		String line = sc.nextLine();
 		String[] tokens = line.split(" ");
 		String operation = tokens[0];
-
-		/*
-		 * interface CreateRequest {
-		 * Request get(String[] tokens);
-		 * }
-		 *
-		 * CreateRequest[] requests = new CreateRequest[] {
-		 * new CreateRequest() { public Request get(String[] tokens) { return
-		 * createAddRequest(tokens); }},
-		 * new CreateRequest() { public Request get(String[] tokens) { return
-		 * createSellRequest(tokens); }},
-		 * };
-		 *
-		 * return requests[0].get(tokens);
-		 */
 
 		if (operation.equals("add") || operation.equals("a")) {
 			return createAddRequest(tokens);
