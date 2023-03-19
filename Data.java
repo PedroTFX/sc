@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Hashtable;
 
 public class Data {
 
@@ -16,6 +17,10 @@ public class Data {
 		BufferedReader br = null;
 			br = new BufferedReader(new FileReader(USER_FILE));
 			while ((line = br.readLine()) != null) {
+				if ((line.equals(""))){
+					br.close();
+					return null;
+				}
 				String[] userInfo = line.split(":");
 				if (userInfo[0].equals(key)) {
 					br.close();
@@ -26,9 +31,16 @@ public class Data {
 		return null;
 	}
 
-
     public static boolean confirmPassword(String user, String password) throws IOException {
-		return readUserInfoFromFile(user).split(":")[1].equals(password);
+		String info = readUserInfoFromFile(user);
+		String DBPass = null;
+		if (info != null) {
+			DBPass = info.split(":")[1];
+			return DBPass.equals(password);
+		} else {
+			return false;
+		}
+		//return readUserInfoFromFile(user).split(":")[1].equals(password);
     }
 
 	public static boolean registerUser(String userInfo) throws IOException {
@@ -97,6 +109,11 @@ public class Data {
 		bw.close();
 		return true;
     }
+
+
+	public static void addNewWine(){
+		//porto:portinho.jpg
+	}
 	/**
 	 *
 	 * TESTES
@@ -151,6 +168,26 @@ public class Data {
 		updateLineUsers("user30:pass:100:vinho1,vinho2:es lindo", "user30:pass:100:vinho1,vinho2:es feio");
 
 
+	}
+
+
+	public static Hashtable<String, String> getListings() {
+		return null;
+	}
+
+
+	public static boolean updateListings(Hashtable<String, String> wineListings) {
+		return false;
+	}
+
+
+	public static boolean sendMSM(String string) {
+		return false;
+	}
+
+
+	public static String[] readMSM(String id) {
+		return null;
 	}
 }
 
