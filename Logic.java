@@ -14,8 +14,8 @@ public class Logic {
      * Inicialmente o vinho não terá qualquer classificação e o número de unidades disponíveis
      * será zero.
      */
-    public static boolean addWine(String wine) throws IOException{
-        return Wine.addWine(wine);
+    public static boolean addWine(String wine, String user) throws IOException{
+        return Wine.addWine(wine, user);
     }
 
     /*
@@ -23,7 +23,7 @@ public class Logic {
      * unidades do vinho wine pelo valor value. Caso o wine não exista, deve ser devolvido um
      * erro.
      */
-    public static boolean sellWine(String userId, String wine, int quantity) {
+    public static boolean sellWine(String userId, String wine, int quantity) throws IOException {
         //checkif wine exists
         if(!Wine.wineExists(wine) || quantity < 0){
             return false;
@@ -38,8 +38,9 @@ public class Logic {
      * quantidade disponível. Caso o vinho wine não exista, deve ser devolvido um erro.
      * @param wine
      * @return
+     * @throws IOException
      */
-    public static String viewWine(String wine) {
+    public static String viewWine(String wine) throws IOException {
 		return (!Wine.wineExists(wine)) ? null : Wine.getWine(wine) + "\n" + Listings.getListing(wine);
 	}
 

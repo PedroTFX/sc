@@ -107,7 +107,9 @@ public class Tintolmarket implements Serializable {
 				if(response.type == Response.Type.VIEW){
 					BufferedImage image = WineImage.readImageFromNetwork(in);
 					File folder = WineImage.createFolder("client-images");
+					System.out.println("before");
 					WineImage.writeImageToFile(folder, image, WineImage.getImageExtension(response.image));
+					System.out.println("after");
 				}
 
 				// Print response

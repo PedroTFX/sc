@@ -9,6 +9,7 @@ import java.net.Socket;
 
 public class TintolmarketServer implements Serializable {
 	private static int port = 12345;
+	private static final String IMAGES_FOLDER = "server-images\\";
 
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
@@ -50,6 +51,7 @@ public class TintolmarketServer implements Serializable {
 		ObjectOutputStream outStream;
 		ObjectInputStream inStream;
 		String userId = null;
+		boolean close = false;
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
@@ -69,7 +71,7 @@ public class TintolmarketServer implements Serializable {
 			listen();
 
 			// Close socket and thread
-			// closeServer();
+			closeServer();
 		}
 
 		private void init() {
@@ -92,12 +94,11 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.ERROR;
 					response.message = "O utilizador tem que se autenticar primeiro!";
 					outStream.writeObject(response);
-					closeServer();
+					close = true;
 				}
 
-				userId = request.user;
-				User user = new User(request.user, request.password);
-				if (user.authenticate(user.getId(), user.getPass())) {
+				if (Data.confirmPassword(request.user, request.password)) {
+					userId = request.user;
 					response.type = Response.Type.OK;
 					response.message = "OK";
 					// Send response
@@ -105,9 +106,8 @@ public class TintolmarketServer implements Serializable {
 				} else {
 					response.type = Response.Type.ERROR;
 					response.message = "Combinação userID/password incorreta";
-					// closeServer();
 					outStream.writeObject(response);
-					socket.close();
+					close = true;
 				}
 				/*
 				 * // Check if user exists and password is correct
@@ -128,7 +128,7 @@ public class TintolmarketServer implements Serializable {
 
 		private void listen() {
 			System.out.printf("Listening to client %s requests...\n", userId);
-			while (!socket.isClosed()) {
+			while (!socket.isClosed() && !close) {
 				try {
 					Request request = (Request) inStream.readObject();
 					Response response = processRequest(request);
@@ -139,7 +139,7 @@ public class TintolmarketServer implements Serializable {
 						String wineImageName = Data.readImageNameFromWineImageFile(request.wine);
 						// Ler imagem do disco
 						BufferedImage image = WineImage
-								.readImageFromDisk(WineImage.getImagePath("server-images\\" + wineImageName));
+								.readImageFromDisk(WineImage.getImagePath(IMAGES_FOLDER + wineImageName));
 						// Enviar imagem pela rede
 						WineImage.sendImage(image, outStream, wineImageName);
 					}
@@ -158,7 +158,7 @@ public class TintolmarketServer implements Serializable {
 
 				// Check if wine already exists
 
-				boolean alreadyExists = Logic.addWine(request.wine);
+				boolean alreadyExists = Logic.addWine(request.wine, userId);
 
 				if (!alreadyExists) {
 					response.type = Response.Type.ERROR;
@@ -180,19 +180,25 @@ public class TintolmarketServer implements Serializable {
 				response.type = Response.Type.OK;
 
 			}
-			/*
-			 * else if (request.operation == Request.Operation.SELL) {
-			 * boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
-			 * if (!exists) {
-			 * response.type = Response.Type.ERROR;
-			 * response.message = "Esse vinho não existe!";
-			 * } else {
-			 * response.type = Response.Type.OK;
-			 * }
-			 * }
-			 */ else if (request.operation == Request.Operation.VIEW) {
+
+			else if (request.operation == Request.Operation.SELL) {
+				boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
+				if (!exists) {
+					response.type = Response.Type.ERROR;
+					response.message = "Esse vinho não existe!";
+				} else {
+					response.type = Response.Type.OK;
+				}
+			} else if (request.operation == Request.Operation.VIEW) {
 				String exists = Logic.viewWine(request.wine);
-				exists = "porto";
+				String[] existsTokens;
+				String wineImageNameToSend = null;
+				if (exists != null) {
+					existsTokens = exists.split(":");
+					wineImageNameToSend = Data.readImageNameFromWineImageFile(existsTokens[0]);
+					System.out.println(wineImageNameToSend);
+				}
+				// exists = "porto";
 				// nao apagar!!!!!!!!!!!!
 
 				/*
@@ -207,8 +213,6 @@ public class TintolmarketServer implements Serializable {
 				// response.averageWineClassification =
 				// Logic.averageWineClasification(request.wine);
 
-				String wineImageNameToSend = Data.readImageNameFromWineImageFile(exists);
-				System.out.println(wineImageNameToSend);
 				/*
 				 * BufferedImage image = WineImage.readImageFromDisk("server-images\\" +
 				 * wineImageNameToSend);
@@ -220,13 +224,13 @@ public class TintolmarketServer implements Serializable {
 				response.image = wineImageNameToSend;
 			} else if (request.operation == Request.Operation.WALLET) {
 				response.type = Response.Type.OK;
-				if (Logic.wallet(userId) != null){
+				if (Logic.wallet(userId) != null) {
 					response.balance = Integer.parseInt(Logic.wallet(userId));
-				} else{
+				} else {
 					response.type = Response.Type.ERROR;
 					response.balance = -1;
 				}
-			}/*  else if (request.operation == Request.Operation.CLASSIFY) {
+			} else if (request.operation == Request.Operation.CLASSIFY) {
 				boolean reviewd = false;
 				try {
 					reviewd = Logic.classify(userId, request.stars);
@@ -237,23 +241,22 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.OK;
 				}
 			} else if (request.operation == Request.Operation.TALK) {
-				boolean messageSent = Logic.sendMessage(userId, request.user,
-						request.message);
-				if (messageSent) {
+				//boolean messageSent = Logic.sendMessage(userId, request.user,request.message);
+/* 				if (messageSent) {
 					response.type = Response.Type.OK;
 				} else {
 					response.type = Response.Type.ERROR;
 					response.message = "Recetor não existe";
-				}
+				} */
 			} else if (request.operation == Request.Operation.READ) {
-				Hashtable<String, String[]> messages = Logic.getMessage(userId);
-				if (messages != null) {
+				//Hashtable<String, String[]> messages = Logic.getMessage(userId);
+/* 				if (messages != null) {
 					response.messages = messages;
 					response.type = Response.Type.OK;
 				} else {
 					response.type = Response.Type.ERROR;
-				}
-			} */
+				} */
+			}
 
 			System.out.printf("RESPONSE: %s\n", response);
 			return response;
@@ -265,7 +268,6 @@ public class TintolmarketServer implements Serializable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			System.exit(-1);
 		}
 	}
 

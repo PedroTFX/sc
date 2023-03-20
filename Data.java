@@ -12,6 +12,7 @@ public class Data {
 	public static final String USER_FILE = "users.txt";
 	public static final String WINE_FILE = "wines.txt";
 	public static final String WINE_IMAGE_FILE = "wine_image.txt";
+	public static final String STARTING_BALANCE = "200";
 
 	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws IOException{
 /* 		BufferedReader file = new BufferedReader(new FileReader(new File(WINE_IMAGE_FILE)));
@@ -59,7 +60,7 @@ public class Data {
 			DBPass = info.split(":")[1];
 			return DBPass.equals(password);
 		} else {
-			return false;
+			return writeOnFile(user + ":" + password + ":" + STARTING_BALANCE, USER_FILE);
 		}
 		//return readUserInfoFromFile(user).split(":")[1].equals(password);
     }
@@ -125,6 +126,7 @@ public class Data {
 	public static boolean writeOnFile(String line, String fileName) throws IOException{
         BufferedWriter bw = new BufferedWriter(new FileWriter(fileName,true));
 		bw.write(line);
+		bw.flush();
 		// Revoke newLine() method
 		bw.newLine();
 		bw.close();
@@ -189,7 +191,6 @@ public class Data {
 
 
 	}
-
 
 	public static Hashtable<String, String> getListings() {
 		return null;
