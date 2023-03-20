@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.util.zip.Inflater;
 
 public class Wine {
 
@@ -60,7 +59,7 @@ public class Wine {
 		if (wineInfo != null){
 			return false;
 		}
-		return Data.writeOnFile(wine + ":" + user + ":" + "" + ":" + "", Data.WINE_FILE);
+		return Data.writeOnFile(wine + ":" + user + ":" + "" + ":" + "", Constants.WINE_FILE);
 	}
 
 	public static boolean wineExists(String wine) throws IOException {

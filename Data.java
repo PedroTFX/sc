@@ -9,10 +9,10 @@ import java.util.Hashtable;
 
 public class Data {
 
-	public static final String USER_FILE = "users.txt";
+/* 	public static final String USER_FILE = "users.txt";
 	public static final String WINE_FILE = "wines.txt";
 	public static final String WINE_IMAGE_FILE = "wine_image.txt";
-	public static final String STARTING_BALANCE = "200";
+	public static final String STARTING_BALANCE = "200"; */
 
 	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws IOException{
 /* 		BufferedReader file = new BufferedReader(new FileReader(new File(WINE_IMAGE_FILE)));
@@ -31,13 +31,13 @@ public class Data {
 		file.close();
 		os.close();
 		return true; */
-		return writeOnFile(updatedLine, WINE_IMAGE_FILE);
+		return writeOnFile(updatedLine, Constants.WINE_IMAGE_FILE);
 	}
 
 	public static String readUserInfoFromFile(String key) throws IOException{
 		String line = null;
 		BufferedReader br = null;
-			br = new BufferedReader(new FileReader(USER_FILE));
+			br = new BufferedReader(new FileReader(Constants.USER_FILE));
 			while ((line = br.readLine()) != null) {
 				if ((line.equals(""))){
 					br.close();
@@ -60,19 +60,19 @@ public class Data {
 			DBPass = info.split(":")[1];
 			return DBPass.equals(password);
 		} else {
-			return writeOnFile(user + ":" + password + ":" + STARTING_BALANCE, USER_FILE);
+			return writeOnFile(user + ":" + password + ":" + Constants.STARTING_BALANCE, Constants.USER_FILE);
 		}
 		//return readUserInfoFromFile(user).split(":")[1].equals(password);
     }
 
 	public static boolean registerUser(String userInfo) throws IOException {
-		return writeOnFile(userInfo, USER_FILE);
+		return writeOnFile(userInfo, Constants.USER_FILE);
 	}
 
 	public static String readWineInfoFromFile(String key) throws IOException{
 		String line = null;
 		BufferedReader br = null;
-			br = new BufferedReader(new FileReader(WINE_FILE));
+			br = new BufferedReader(new FileReader(Constants.WINE_FILE));
 			while ((line = br.readLine()) != null) {
 				String[] userInfo = line.split(":");
 				if (userInfo[0].equals(key)) {
@@ -86,7 +86,7 @@ public class Data {
 
 	public static boolean updateLineWines(String toUpdate, String updated) throws IOException {
 
-		BufferedReader file = new BufferedReader(new FileReader(new File(WINE_FILE)));
+		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.WINE_FILE)));
 
 		String line;
 		String input = "";
@@ -96,7 +96,7 @@ public class Data {
 		}
 		input = input.replace(toUpdate, updated);
 
-		FileOutputStream os = new FileOutputStream(new File(WINE_FILE));
+		FileOutputStream os = new FileOutputStream(new File(Constants.WINE_FILE));
 		os.write(input.getBytes());
 
 		file.close();
@@ -105,7 +105,7 @@ public class Data {
 	}
 
 	public static boolean updateLineUsers(String toUpdate, String updated) throws IOException {
-		BufferedReader file = new BufferedReader(new FileReader(new File(USER_FILE)));
+		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.USER_FILE)));
 
 		String line;
 		String input = "";
@@ -115,7 +115,7 @@ public class Data {
 		}
 		input = input.replace(toUpdate, updated);
 
-		FileOutputStream os = new FileOutputStream(new File(USER_FILE));
+		FileOutputStream os = new FileOutputStream(new File(Constants.USER_FILE));
 		os.write(input.getBytes());
 
 		file.close();
@@ -211,7 +211,7 @@ public class Data {
 	public static String readImageNameFromWineImageFile(String exists) throws IOException {
 		String line = null;
 		BufferedReader br = null;
-		br = new BufferedReader(new FileReader(WINE_IMAGE_FILE));
+		br = new BufferedReader(new FileReader(Constants.WINE_IMAGE_FILE));
 		while ((line = br.readLine()) != null) {
 			if ((line.equals(""))) {
 				br.close();

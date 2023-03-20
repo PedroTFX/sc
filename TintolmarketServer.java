@@ -9,7 +9,6 @@ import java.net.Socket;
 
 public class TintolmarketServer implements Serializable {
 	private static int port = 12345;
-	private static final String IMAGES_FOLDER = "server-images\\";
 
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
@@ -139,7 +138,7 @@ public class TintolmarketServer implements Serializable {
 						String wineImageName = Data.readImageNameFromWineImageFile(request.wine);
 						// Ler imagem do disco
 						BufferedImage image = WineImage
-								.readImageFromDisk(WineImage.getImagePath(IMAGES_FOLDER + wineImageName));
+								.readImageFromDisk(WineImage.getImagePath(Constants.IMAGES_FOLDER + wineImageName));
 						// Enviar imagem pela rede
 						WineImage.sendImage(image, outStream, wineImageName);
 					}
@@ -190,35 +189,22 @@ public class TintolmarketServer implements Serializable {
 				String exists = Logic.viewWine(request.wine);
 				String[] existsTokens;
 				String wineImageNameToSend = null;
-				if (exists != null) {
-					existsTokens = exists.split(":");
-					wineImageNameToSend = Data.readImageNameFromWineImageFile(existsTokens[0]);
-					System.out.println("wineImageToSend: " + wineImageNameToSend);
+				if (exists == null) {
+					response.type = Response.Type.ERROR;
+					response.message = "Este vinho nao existe";
 				}
-				// exists = "porto";
-				// nao apagar!!!!!!!!!!!!
+				String wineInfo = Data.readWineInfoFromFile(request.wine);
+				String SellsInfo = null;
+				if(wineInfo != null){
+					String[] wineInfoTokens = wineInfo.split(":");
+					existsTokens = exists.split(":");
+					wineImageNameToSend = Data.readImageNameFromWineImageFile(wineInfoTokens[0]);
+					response.type = Response.Type.VIEW;
+					response.wine = request.wine;
+					response.image = wineImageNameToSend;
+					response.averageWineClassification = Double.parseDouble(wineInfoTokens[3]);
+				}
 
-				/*
-				 * if (exists == null) {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "Este vinho nao existe";
-				 * }
-				 */
-
-				// nao apagar!!!!!!!!!!!!!
-				// response.seller = Logic.getSeller(request.wine);
-				// response.averageWineClassification =
-				// Logic.averageWineClasification(request.wine);
-
-				/*
-				 * BufferedImage image = WineImage.readImageFromDisk("server-images\\" +
-				 * wineImageNameToSend);
-				 * WineImage.sendImage(image, outStream, wineImageNameToSend);
-				 */
-
-				response.type = Response.Type.VIEW;
-				response.wine = request.wine;
-				response.image = wineImageNameToSend;
 			} else if (request.operation == Request.Operation.WALLET) {
 				response.type = Response.Type.OK;
 				if (Logic.wallet(userId) != null) {
@@ -238,24 +224,29 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.OK;
 				}
 			} else if (request.operation == Request.Operation.TALK) {
-				//boolean messageSent = Logic.sendMessage(userId, request.user,request.message);
-/* 				if (messageSent) {
-					response.type = Response.Type.OK;
-				} else {
-					response.type = Response.Type.ERROR;
-					response.message = "Recetor não existe";
-				} */
+				// boolean messageSent = Logic.sendMessage(userId,
+				// request.user,request.message);
+				/*
+				 * if (messageSent) {
+				 * response.type = Response.Type.OK;
+				 * } else {
+				 * response.type = Response.Type.ERROR;
+				 * response.message = "Recetor não existe";
+				 * }
+				 */
 			} else if (request.operation == Request.Operation.READ) {
-				//Hashtable<String, String[]> messages = Logic.getMessage(userId);
-/* 				if (messages != null) {
-					response.messages = messages;
-					response.type = Response.Type.OK;
-				} else {
-					response.type = Response.Type.ERROR;
-				} */
+				// Hashtable<String, String[]> messages = Logic.getMessage(userId);
+				/*
+				 * if (messages != null) {
+				 * response.messages = messages;
+				 * response.type = Response.Type.OK;
+				 * } else {
+				 * response.type = Response.Type.ERROR;
+				 * }
+				 */
 			}
 
-			System.out.printf("RESPONSE: %s\n", response);
+			//System.out.printf("RESPONSE: %s\n", response);
 			return response;
 		}
 

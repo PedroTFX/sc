@@ -10,7 +10,7 @@ public class Response implements Serializable {
 	String wine;
 	String message;
 	String image;
-	int averageWineClassification;
+	double averageWineClassification;
 	String seller;
 	int price;
 	int quantity;
