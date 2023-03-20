@@ -111,7 +111,8 @@ public class Tintolmarket implements Serializable {
 				}
 
 				// Print response
-				System.out.println(response);
+				//System.out.println(response);
+				System.out.println("balance: " + response.balance);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

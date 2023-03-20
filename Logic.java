@@ -4,9 +4,9 @@ public class Logic {
 
     private static User currentUser = null;
 
-    public User autheticate(String user , String password) throws IOException{
+/*     public User autheticate(String user , String password) throws IOException{
         return (currentUser = new User(user, password));
-    }
+    } */
 
     /*
      * add <wine> <image> - adiciona um novo vinho identificado por wine, associado à imagem
@@ -64,9 +64,19 @@ public class Logic {
     /**
      * obtém o saldo atual da carteira do utilizador
      * @return
+     * @throws IOException
      */
-    public static String wallet(){
-        return String.valueOf(currentUser.getBalance());
+    public static String wallet(String user) throws IOException{
+		String info = Data.readUserInfoFromFile(user);
+		if (info == null){
+			return null;
+		}
+		String[] infoTokens = info.split(":");
+		if (infoTokens.length == 3){
+			return infoTokens[2];
+		}
+		//return String.valueOf(currentUser.getBalance());
+		return null;
     }
 
     /**

@@ -97,25 +97,27 @@ public class TintolmarketServer implements Serializable {
 
 				userId = request.user;
 				User user = new User(request.user, request.password);
-				if(user.authenticate(user.getId(), user.getPass())){
+				if (user.authenticate(user.getId(), user.getPass())) {
 					response.type = Response.Type.OK;
 					response.message = "OK";
 					// Send response
 					outStream.writeObject(response);
-				} else{
+				} else {
 					response.type = Response.Type.ERROR;
 					response.message = "Combinação userID/password incorreta";
-					//closeServer();
+					// closeServer();
 					outStream.writeObject(response);
 					socket.close();
 				}
-				/* 				// Check if user exists and password is correct
-				if (!Data.confirmPassword(userId, request.password)) {
-					response.type = Response.Type.ERROR;
-					response.message = "Combinação userID/password incorreta";
-					outStream.writeObject(response);
-					close();
-				} */
+				/*
+				 * // Check if user exists and password is correct
+				 * if (!Data.confirmPassword(userId, request.password)) {
+				 * response.type = Response.Type.ERROR;
+				 * response.message = "Combinação userID/password incorreta";
+				 * outStream.writeObject(response);
+				 * close();
+				 * }
+				 */
 
 				// Send response
 				// outStream.writeObject(response);
@@ -136,7 +138,8 @@ public class TintolmarketServer implements Serializable {
 						// Ir à DB ler o nome da imagem deste vinho no disco
 						String wineImageName = Data.readImageNameFromWineImageFile(request.wine);
 						// Ler imagem do disco
-						BufferedImage image = WineImage.readImageFromDisk(WineImage.getImagePath("server-images\\" + wineImageName));
+						BufferedImage image = WineImage
+								.readImageFromDisk(WineImage.getImagePath("server-images\\" + wineImageName));
 						// Enviar imagem pela rede
 						WineImage.sendImage(image, outStream, wineImageName);
 					}
@@ -163,7 +166,6 @@ public class TintolmarketServer implements Serializable {
 					return response;
 				} else {
 
-
 					// Everything OK, save image to disk
 					File folder = WineImage.createFolder();
 					String[] imageTokens = request.image.split("\\.");
@@ -179,73 +181,79 @@ public class TintolmarketServer implements Serializable {
 
 			}
 			/*
-				 * else if (request.operation == Request.Operation.SELL) {
-				 * boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
-				 * if (!exists) {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "Esse vinho não existe!";
-				 * } else {
-				 * response.type = Response.Type.OK;
-				 * }
-				 * }
-				 */ else if (request.operation == Request.Operation.VIEW) {
+			 * else if (request.operation == Request.Operation.SELL) {
+			 * boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
+			 * if (!exists) {
+			 * response.type = Response.Type.ERROR;
+			 * response.message = "Esse vinho não existe!";
+			 * } else {
+			 * response.type = Response.Type.OK;
+			 * }
+			 * }
+			 */ else if (request.operation == Request.Operation.VIEW) {
 				String exists = Logic.viewWine(request.wine);
 				exists = "porto";
 				// nao apagar!!!!!!!!!!!!
 
-				/* if (exists == null) {
-					response.type = Response.Type.ERROR;
-					response.message = "Este vinho nao existe";
-				} */
+				/*
+				 * if (exists == null) {
+				 * response.type = Response.Type.ERROR;
+				 * response.message = "Este vinho nao existe";
+				 * }
+				 */
 
 				// nao apagar!!!!!!!!!!!!!
 				// response.seller = Logic.getSeller(request.wine);
 				// response.averageWineClassification =
 				// Logic.averageWineClasification(request.wine);
 
-
 				String wineImageNameToSend = Data.readImageNameFromWineImageFile(exists);
 				System.out.println(wineImageNameToSend);
-				/* BufferedImage image = WineImage.readImageFromDisk("server-images\\" + wineImageNameToSend);
-				WineImage.sendImage(image, outStream, wineImageNameToSend); */
-
+				/*
+				 * BufferedImage image = WineImage.readImageFromDisk("server-images\\" +
+				 * wineImageNameToSend);
+				 * WineImage.sendImage(image, outStream, wineImageNameToSend);
+				 */
 
 				response.type = Response.Type.VIEW;
 				response.wine = request.wine;
 				response.image = wineImageNameToSend;
-			} /*
-				 * else if (request.operation == Request.Operation.WALLET) {
-				 * response.type = Response.Type.OK;
-				 * response.balance = Integer.parseInt(Logic.wallet());
-				 * } else if (request.operation == Request.Operation.CLASSIFY) {
-				 * boolean reviewd = false;
-				 * try {
-				 * reviewd = Logic.classify(userId, request.stars);
-				 * } catch (IOException e) {
-				 * e.printStackTrace();
-				 * }
-				 * if (reviewd) {
-				 * response.type = Response.Type.OK;
-				 * }
-				 * } else if (request.operation == Request.Operation.TALK) {
-				 * boolean messageSent = Logic.sendMessage(userId, request.user,
-				 * request.message);
-				 * if (messageSent) {
-				 * response.type = Response.Type.OK;
-				 * } else {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "Recetor não existe";
-				 * }
-				 * } else if (request.operation == Request.Operation.READ) {
-				 * Hashtable<String, String[]> messages = Logic.getMessage(userId);
-				 * if (messages != null) {
-				 * response.messages = messages;
-				 * response.type = Response.Type.OK;
-				 * } else {
-				 * response.type = Response.Type.ERROR;
-				 * }
-				 * }
-				 */
+			} else if (request.operation == Request.Operation.WALLET) {
+				response.type = Response.Type.OK;
+				if (Logic.wallet(userId) != null){
+					response.balance = Integer.parseInt(Logic.wallet(userId));
+				} else{
+					response.type = Response.Type.ERROR;
+					response.balance = -1;
+				}
+			}/*  else if (request.operation == Request.Operation.CLASSIFY) {
+				boolean reviewd = false;
+				try {
+					reviewd = Logic.classify(userId, request.stars);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (reviewd) {
+					response.type = Response.Type.OK;
+				}
+			} else if (request.operation == Request.Operation.TALK) {
+				boolean messageSent = Logic.sendMessage(userId, request.user,
+						request.message);
+				if (messageSent) {
+					response.type = Response.Type.OK;
+				} else {
+					response.type = Response.Type.ERROR;
+					response.message = "Recetor não existe";
+				}
+			} else if (request.operation == Request.Operation.READ) {
+				Hashtable<String, String[]> messages = Logic.getMessage(userId);
+				if (messages != null) {
+					response.messages = messages;
+					response.type = Response.Type.OK;
+				} else {
+					response.type = Response.Type.ERROR;
+				}
+			} */
 
 			System.out.printf("RESPONSE: %s\n", response);
 			return response;
