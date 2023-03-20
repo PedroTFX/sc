@@ -256,7 +256,7 @@ public class Tintolmarket implements Serializable {
 		String wine = tokens[1];
 		int stars;
 		try {
-			stars = Integer.parseInt(tokens[3]);
+			stars = Integer.parseInt(tokens[2]);
 		} catch (Exception e) {
 			System.out.println("Stars têm que ser inteiros");
 			return null;

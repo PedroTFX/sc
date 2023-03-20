@@ -117,4 +117,13 @@ public class Logic {
     public static String[] read(){
         return MsmContainer.getMSM(currentUser);
     }
+
+	public static int sumClassifications(String classifications) {
+		int sum = 0;
+		String[] classificationsTokens = classifications.split(",");
+		for (int i = 0; i < classificationsTokens.length; i++) {
+			sum += Integer.parseInt(classificationsTokens[i]);
+		}
+		return sum;
+	}
 }

@@ -230,7 +230,7 @@ public class TintolmarketServer implements Serializable {
 			} else if (request.operation == Request.Operation.CLASSIFY) {
 				boolean reviewd = false;
 				try {
-					reviewd = Logic.classify(userId, request.stars);
+					reviewd = Logic.classify(request.wine, request.stars);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.zip.Inflater;
 
 public class Wine {
 
@@ -40,13 +41,18 @@ public class Wine {
 
 	public static boolean classify(String wine, int classification) throws IOException {
 		String info = Data.readWineInfoFromFile(wine);
-
 		String[] infoTokens = info.split(":");
-		infoTokens[infoTokens.length - 1] = infoTokens[infoTokens.length - 1] + "," + String.valueOf(classification);
+		StringBuilder newLine = new StringBuilder();
+		if(infoTokens.length == 2){
+			newLine.append(infoTokens[0] + ":" + infoTokens[1] + ":" + String.valueOf(classification) + ":" + String.valueOf(classification));
+			return Data.updateLineWines(info, newLine.toString());
+		}
 
-		String newLine = String.join(":", infoTokens);
-
-		return Data.updateLineWines(info, newLine);
+		int sumClassifications = Logic.sumClassifications(infoTokens[2]) + classification;
+		double avgClassification = (double)sumClassifications / (infoTokens[2].split(",").length + 1);
+		//String newLine = String.join(":", infoTokens);
+		newLine.append(infoTokens[0] + ":" + infoTokens[1] + ":" + infoTokens[2] + "," + String.valueOf(classification) + ":" + String.valueOf(avgClassification));
+		return Data.updateLineWines(info, newLine.toString());
 	}
 
  	public static boolean addWine(String wine, String user) throws IOException {
