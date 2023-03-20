@@ -178,10 +178,7 @@ public class TintolmarketServer implements Serializable {
 				}
 				// Create response
 				response.type = Response.Type.OK;
-
-			}
-
-			else if (request.operation == Request.Operation.SELL) {
+			} else if (request.operation == Request.Operation.SELL) {
 				boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
 				if (!exists) {
 					response.type = Response.Type.ERROR;
@@ -196,7 +193,7 @@ public class TintolmarketServer implements Serializable {
 				if (exists != null) {
 					existsTokens = exists.split(":");
 					wineImageNameToSend = Data.readImageNameFromWineImageFile(existsTokens[0]);
-					System.out.println(wineImageNameToSend);
+					System.out.println("wineImageToSend: " + wineImageNameToSend);
 				}
 				// exists = "porto";
 				// nao apagar!!!!!!!!!!!!

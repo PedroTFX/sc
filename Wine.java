@@ -61,7 +61,12 @@ public class Wine {
 		return Data.readWineInfoFromFile(wine) != null;
 	}
 
-	public static String getWine(String wine) {
-		return null;
+	public static String getWine(String wine) throws IOException {
+		String wineInfo = Data.readWineInfoFromFile(wine);
+		String[] wineTokens = null;
+		if (wineInfo != null) {
+			wineTokens = wineInfo.split(":");
+		}
+		return wineTokens[0];
 	}
 }

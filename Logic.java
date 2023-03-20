@@ -41,7 +41,7 @@ public class Logic {
      * @throws IOException
      */
     public static String viewWine(String wine) throws IOException {
-		return (!Wine.wineExists(wine)) ? null : Wine.getWine(wine) + "\n" + Listings.getListing(wine);
+		return (!Wine.wineExists(wine)) ? null : Wine.getWine(wine);
 	}
 
     //TODO the wine list must have a way to find the wine by seller
