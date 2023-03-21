@@ -39,6 +39,7 @@ public class WineImage {
 		return true;
 	}
 
+	//TODO - THIS METHOD IS NOT USED DEPRICATION
 	public static String getImageFileExtension(BufferedImage image) {
 		if (image == null) {
 			return "";
@@ -56,6 +57,11 @@ public class WineImage {
 		return extension;
 	}
 
+	/**
+	 * Returns the extension of the image.
+	 * @param imageName
+	 * @return
+	 */
 	public static String getImageExtension(String imageName) {
 		if (imageName == null) {
 			return null;
@@ -64,12 +70,23 @@ public class WineImage {
 		return imageNameTokens[imageNameTokens.length - 1];
 	}
 
+	/**
+	 * Reads an image from disk.
+	 * @param ImagePath
+	 * @return
+	 * @throws IOException
+	 */
 	public static BufferedImage readImageFromDisk(String ImagePath) throws IOException {
 		File input = new File(getImagePath(ImagePath));
 		BufferedImage image = ImageIO.read(input);
 		return image;
 	}
 
+	/**
+	 * Returns the full path of the image.
+	 * @param ImageName
+	 * @return
+	 */
 	public static String getImagePath(String ImageName) {
 		Path basePath = Paths.get(new File("").getAbsolutePath());
 		Path imagePath = Paths.get(ImageName);
@@ -78,6 +95,11 @@ public class WineImage {
 		return fullPath.toString();
 	}
 
+	/**
+	 * Creates a folder with the given name if it doesn't exist.
+	 * @param name
+	 * @return
+	 */
 	public static File createFolder(String name) {
 		// Create a folder for the images
 		File folder = new File(name);
@@ -88,6 +110,7 @@ public class WineImage {
 		return folder;
 	}
 
+	//DOESNT NEED TIMEMILLISECONDS THERE IS A UNIQUE NAME FOR EACH IMAGE AND IT IS THE NAME OF THE WINE
 	public static String writeImageToFile(File folder, BufferedImage image, String extension) throws IOException {
 		String fileName = /* "server-image-" */folder.toString() + System.currentTimeMillis() + "." + extension;
 		//String fileName = "portao.jpg";

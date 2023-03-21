@@ -4,9 +4,9 @@ public class Logic {
 
     private static User currentUser = null;
 
-/*     public User autheticate(String user , String password) throws IOException{
+    public User autheticate(String user , String password) throws IOException{
         return (currentUser = new User(user, password));
-    } */
+    } 
 
     /*
      * add <wine> <image> - adiciona um novo vinho identificado por wine, associado à imagem
@@ -22,6 +22,7 @@ public class Logic {
      * sell  <wine>  <value>  <quantity>  -  coloca  à  venda  o  número  indicado  por  quantity  de
      * unidades do vinho wine pelo valor value. Caso o wine não exista, deve ser devolvido um
      * erro.
+     * TODO Update fuction for using currentUser from authenicate
      */
     public static boolean sellWine(String userId, String wine, int quantity, int value) throws IOException {
         //checkif wine exists
@@ -58,12 +59,12 @@ public class Logic {
      * @throws IOException
      */
     public static boolean buyWine(String seller, String wine, int quantity) throws IOException{
-
         return Listings.available(seller, wine, quantity) && User.buy(quantity, Listings.getPrice(seller, wine)) && Listings.buyListing(seller, wine, quantity);
     }
 
     /**
      * obtém o saldo atual da carteira do utilizador
+     * TODO Update fuction for using currentUser from authenicate
      * @return
      * @throws IOException
      */
@@ -117,13 +118,4 @@ public class Logic {
     public static String[] read(){
         return MsmContainer.getMSM(currentUser);
     }
-
-	public static int sumClassifications(String classifications) {
-		int sum = 0;
-		String[] classificationsTokens = classifications.split(",");
-		for (int i = 0; i < classificationsTokens.length; i++) {
-			sum += Integer.parseInt(classificationsTokens[i]);
-		}
-		return sum;
-	}
 }
