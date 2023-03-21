@@ -9,6 +9,7 @@ import java.net.Socket;
 
 public class TintolmarketServer implements Serializable {
 	private static int port = 12345;
+	private static boolean close = false;
 
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
@@ -24,8 +25,9 @@ public class TintolmarketServer implements Serializable {
 	 * @param port
 	 */
 	public void startServer(int port) {
+		// Initialize
 		ServerSocket sSoc = null;
-
+		Data.createDBs();
 		try {
 			sSoc = new ServerSocket(port);
 		} catch (IOException e) {
@@ -33,7 +35,8 @@ public class TintolmarketServer implements Serializable {
 			System.exit(-1);
 		}
 
-		while (true) {
+		// Launch threads for new client requests
+		while (!close) {
 			try {
 				Socket inSoc = sSoc.accept();
 				new ServerThread(inSoc);
@@ -41,7 +44,13 @@ public class TintolmarketServer implements Serializable {
 				e.printStackTrace();
 			}
 		}
-		// sSoc.close();
+
+		// Close
+		try {
+			sSoc.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// Threads utilizadas para comunicacao com os clientes
@@ -184,11 +193,12 @@ public class TintolmarketServer implements Serializable {
 				}
 				String wineInfo = Data.readWineInfoFromFile(request.wine);
 				String SellsInfo = null;
-				if(wineInfo != null){
+				if (wineInfo != null) {
 					String[] wineInfoTokens = wineInfo.split(":");
 					existsTokens = exists.split(":");
 					wineImageNameToSend = Data.readImageNameFromWineImageFile(wineInfoTokens[0]);
 					response.type = Response.Type.VIEW;
+					response.seller = "ninguem";
 					response.wine = request.wine;
 					response.image = wineImageNameToSend;
 					response.averageWineClassification = Double.parseDouble(wineInfoTokens[3]);
@@ -213,6 +223,7 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.OK;
 				}
 			} else if (request.operation == Request.Operation.TALK) {
+
 				// boolean messageSent = Logic.sendMessage(userId,
 				// request.user,request.message);
 				/*
@@ -233,12 +244,12 @@ public class TintolmarketServer implements Serializable {
 				 * response.type = Response.Type.ERROR;
 				 * }
 				 */
-			} else if(request.operation == Request.Operation.BUY) {
+			} else if (request.operation == Request.Operation.BUY) {
 				String wine = request.wine;
 
 				// Se este vinho não estiver à venda
 				String sellInfo = Data.readSellInfo(request.wine);
-				if (sellInfo == null){
+				if (sellInfo == null) {
 					response.type = Response.Type.ERROR;
 					response.message = "Nao ha esse vinho a venda";
 					return response;
@@ -249,7 +260,7 @@ public class TintolmarketServer implements Serializable {
 				String buyer = userId;
 				String seller = sellInfoTokens[1];
 				int orderQuantity = request.quantity;
-				int stock =  Integer.parseInt(sellInfoTokens[2]);
+				int stock = Integer.parseInt(sellInfoTokens[2]);
 				int price = Integer.parseInt(sellInfoTokens[3]);
 				int buyerBalance = Integer.parseInt(Data.readUserInfoFromFile(userId).split(":")[2]);
 				int sellerBalance = Integer.parseInt(Data.readUserInfoFromFile(seller).split(":")[2]);
@@ -264,14 +275,14 @@ public class TintolmarketServer implements Serializable {
 				int newBuyerBalance = buyerBalance - orderQuantity * price;
 
 				// Se não houverem vinhos suficientes
-				if(newStock < 0){
+				if (newStock < 0) {
 					response.type = Response.Type.ERROR;
 					response.message = "Nao ha quantidade suficiente";
 					return response;
 				}
 
 				// Se o compardor não tiver saldo suficiente
-				if(newBuyerBalance < 0){
+				if (newBuyerBalance < 0) {
 					response.type = Response.Type.ERROR;
 					response.message = "Nao ha saldo suficiente";
 					return response;

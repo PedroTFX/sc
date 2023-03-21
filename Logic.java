@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 
 public class Logic {
@@ -6,7 +7,7 @@ public class Logic {
 
     public User autheticate(String user , String password) throws IOException{
         return (currentUser = new User(user, password));
-    } 
+    }
 
     /*
      * add <wine> <image> - adiciona um novo vinho identificado por wine, associado à imagem
