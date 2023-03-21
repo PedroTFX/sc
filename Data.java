@@ -210,6 +210,20 @@ public class Data {
 		os.close();
 		return true;
 	}
+
+	public static boolean updateWineStock(String wine, String user,  int newStock) throws IOException {
+		String userInfo = Data.readSellInfo(wine);
+		String[] userInfoTokens = userInfo.split(":");
+		userInfoTokens[2] = String.valueOf(newStock);
+		return Data.updateImageSellsFile(userInfo,String.join(":", userInfoTokens));
+	}
+
+	public static boolean updateUserBalance(String userId, int newSellerBalance) throws IOException {
+		String userInfo = Data.readUserInfoFromFile(userId);
+		String[] userInfoTokens = userInfo.split(":");
+		userInfoTokens[2] = String.valueOf(newSellerBalance);
+		return Data.updateLineUsers(userInfo, String.join(":", userInfoTokens));
+	}
 }
 
 
