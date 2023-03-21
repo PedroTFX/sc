@@ -185,7 +185,7 @@ public class Data {
 			String[] fileInfo = line.split(":");
 			if (fileInfo[0].equals(wine)) {
 				br.close();
-				return fileInfo[1];
+				return line;
 			}
 		}
 		br.close();
@@ -193,7 +193,7 @@ public class Data {
 	}
 
 	public static boolean updateImageSellsFile(String toUpdate, String updated) throws IOException {
-		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.USER_FILE)));
+		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.SELLS_FILE)));
 
 		String line;
 		String input = "";
