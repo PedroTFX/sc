@@ -111,10 +111,7 @@ public class Tintolmarket implements Serializable {
 					WineImage.writeImageToFile(folder, image, WineImage.getImageExtension(response.image));
 					System.out.println("after");
 				}
-
-				// Print response
-				//System.out.println(response);
-				System.out.println("balance: " + response.balance);
+				response.responseToString();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

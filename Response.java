@@ -1,5 +1,6 @@
 import java.io.Serializable;
 import java.util.Hashtable;
+import java.util.Set;
 
 public class Response implements Serializable {
 	enum Type {
@@ -17,9 +18,25 @@ public class Response implements Serializable {
 	int balance;
 	Hashtable<String, String[]> messages;
 
-	public String toString() {
-		return String.format("%s | %s | %s | %d | %s | %d | %d | %d | %s", type, message, image,
-				averageWineClassification, seller, price, quantity, balance, messages);
+	public void responseToString() {
+		System.out.println("RESPONSE:");
+		System.out.println("Type: " + type.toString());
+		System.out.println("Wine: " + wine);
+		System.out.println("Error message: " + message);
+		System.out.println("Image name: " + image);
+		System.out.println("avgClassification: " + averageWineClassification);
+		System.out.println("Seller: " + seller);
+		System.out.println("Quantity: " + quantity);
+		System.out.println("Balance: " + balance);
+		if(messages != null){
+			Set<String> users = messages.keySet();
+			for (String user : users) {
+				String[] userMessages = messages.get(user);
+				for (int i = 0; i < userMessages.length; i++) {
+					System.out.print(userMessages[i] + " ; ");
+				}
+			}
+		}
 	}
 
 	private Response(Type operation) {

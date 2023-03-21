@@ -27,13 +27,16 @@ public class Request implements Serializable {
 	String password;
 	String message;
 
-	/*
-	 * public String toString() {
-	 * return String.format("%s | %s | %s | %d | %d | %s | %d | %s | %s | %s",
-	 * operation, wine, image, value, quantity, seller, stars, user, password,
-	 * message);
-	 * }
-	 */
+	public void requestToString() {
+		System.out.println("REQUEST");
+		System.out.println("Operation: " + operation.toString());
+		System.out.println("Image: " + image);
+		System.out.println("Wine: " + wine);
+		System.out.println("Value: " + value);
+		System.out.println("Quantity: " + quantity);
+		System.out.println("seller: " + seller);
+		System.out.println("stars: " + stars);
+	}
 
 	private Request(Operation operation) {
 		this.operation = operation;

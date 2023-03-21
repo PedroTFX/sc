@@ -23,12 +23,12 @@ public class Logic {
      * unidades do vinho wine pelo valor value. Caso o wine não exista, deve ser devolvido um
      * erro.
      */
-    public static boolean sellWine(String userId, String wine, int quantity) throws IOException {
+    public static boolean sellWine(String userId, String wine, int quantity, int value) throws IOException {
         //checkif wine exists
         if(!Wine.wineExists(wine) || quantity < 0){
             return false;
         }
-		return Listings.addListing(userId, wine, quantity);
+		return Listings.addListing(userId, wine, quantity, value);
 	}
 
     /**

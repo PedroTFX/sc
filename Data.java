@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -136,61 +137,6 @@ public class Data {
 	public static void addNewWine(){
 		//porto:portinho.jpg
 	}
-	/**
-	 *
-	 * TESTES
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
-/* 		String line0 = readUserInfoFromFile("user2");
-
-		String line = readUserInfoFromFile("user1");
-
-		String line2 = readUserInfoFromFile("user2");
-
-		String line3 = readUserInfoFromFile("user");
-
-		String line4 = readUserInfoFromFile("user10");
-
-		String line5 = readUserInfoFromFile("user2");
-
-		System.out.println(line0);
-		System.out.println(line);
-		System.out.println(line2);
-		System.out.println(line3);
-		System.out.println(line4);
-		System.out.println(line5);
-
-		System.out.println("VINHOS");
-
-		String wine0 = readWineInfoFromFile("wine");
-
-		String wine = readWineInfoFromFile("wine1");
-
-		String wine2 = readWineInfoFromFile("sporting");
-
-		String wine3 = readWineInfoFromFile("portinho");
-
-		String wine4 = readWineInfoFromFile("benfica");
-
-		String wine5 = readWineInfoFromFile("wine2");
-
-		System.out.println(wine0);
-		System.out.println(wine);
-		System.out.println(wine2);
-		System.out.println(wine3);
-		System.out.println(wine4);
-		System.out.println(wine5);
-
-		*/
-		System.out.println("ESCRITAS");
-
-		updateLineWines("porto:10:100:1,2,3,4,5", "porto:10999:1000000:1,2,3,4,5");
-		updateLineUsers("user30:pass:100:vinho1,vinho2:es lindo", "user30:pass:100:vinho1,vinho2:es feio");
-
-
-	}
 
 	public static Hashtable<String, String> getListings() {
 		return null;
@@ -225,6 +171,44 @@ public class Data {
 		}
 		br.close();
 		return null;
+	}
+
+	public static String readSellInfo(String wine) throws IOException {
+		String line = null;
+		BufferedReader br = null;
+		br = new BufferedReader(new FileReader(Constants.SELLS_FILE));
+		while ((line = br.readLine()) != null) {
+			if ((line.equals(""))) {
+				br.close();
+				return null;
+			}
+			String[] fileInfo = line.split(":");
+			if (fileInfo[0].equals(wine)) {
+				br.close();
+				return fileInfo[1];
+			}
+		}
+		br.close();
+		return null;
+	}
+
+	public static boolean updateImageSellsFile(String toUpdate, String updated) throws IOException {
+		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.USER_FILE)));
+
+		String line;
+		String input = "";
+		// read file line by line and replace
+		while ((line = file.readLine()) != null) {
+			input += line + "\n";
+		}
+		input = input.replace(toUpdate, updated);
+
+		FileOutputStream os = new FileOutputStream(new File(Constants.SELLS_FILE));
+		os.write(input.getBytes());
+
+		file.close();
+		os.close();
+		return true;
 	}
 }
 

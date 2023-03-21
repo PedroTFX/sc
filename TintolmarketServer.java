@@ -86,6 +86,7 @@ public class TintolmarketServer implements Serializable {
 			try {
 				// init
 				Request request = (Request) inStream.readObject(); // Read request
+				request.requestToString();
 				Response response = new Response(); // Prepare response
 
 				// Check if request is an authentication request
@@ -108,18 +109,6 @@ public class TintolmarketServer implements Serializable {
 					outStream.writeObject(response);
 					close = true;
 				}
-				/*
-				 * // Check if user exists and password is correct
-				 * if (!Data.confirmPassword(userId, request.password)) {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "Combinação userID/password incorreta";
-				 * outStream.writeObject(response);
-				 * close();
-				 * }
-				 */
-
-				// Send response
-				// outStream.writeObject(response);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
@@ -149,7 +138,7 @@ public class TintolmarketServer implements Serializable {
 		}
 
 		private Response processRequest(Request request) throws Exception {
-			System.out.printf("REQUEST: %s\n", request);
+			request.requestToString();
 			Response response = new Response();
 			if (request.operation == Request.Operation.ADD) {
 				// Read image from network
@@ -178,7 +167,7 @@ public class TintolmarketServer implements Serializable {
 				// Create response
 				response.type = Response.Type.OK;
 			} else if (request.operation == Request.Operation.SELL) {
-				boolean exists = Logic.sellWine(userId, request.wine, request.quantity);
+				boolean exists = Logic.sellWine(userId, request.wine, request.quantity, request.value);
 				if (!exists) {
 					response.type = Response.Type.ERROR;
 					response.message = "Esse vinho não existe!";
@@ -246,7 +235,6 @@ public class TintolmarketServer implements Serializable {
 				 */
 			}
 
-			//System.out.printf("RESPONSE: %s\n", response);
 			return response;
 		}
 

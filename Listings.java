@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.Hashtable;
 
 public class Listings {
@@ -53,15 +54,23 @@ public class Listings {
      * @param wine
      * @param quantity
      * @return
+     * @throws IOException
      */
-    public static boolean addListing(String userId, String wine, int quantity) {
-        String listingID = userId + ":" + wine;
-        int value = quantity;
-        if(wineListings.containsKey(listingID)){
+    public static boolean addListing(String userId, String wine, int quantity, int value) throws IOException {
+		String sell = Data.readSellInfo(wine);
+		if (sell != null) {
+			String[] sellTokens = sell.split(":");
+			sellTokens[2] = String.valueOf(quantity + Integer.parseInt(sellTokens[2]));
+			return Data.updateImageSellsFile(sell, String.join(":", sellTokens));
+		}
+
+		return Data.writeOnFile(wine + ":" + userId + ":" + String.valueOf(quantity) + ":" + String.valueOf(value), Constants.SELLS_FILE);
+
+        /* if(wineListings.containsKey(listingID)){
             value = Integer.parseInt(wineListings.get(listingID)) + quantity;
         }
         wineListings.put(listingID, Integer.toString(value));
-        return wineListings.containsKey(listingID) && wineListings.get(listingID).equals(Integer.toString(value));
+        return wineListings.containsKey(listingID) && wineListings.get(listingID).equals(Integer.toString(value)); */
     }
 
     public static boolean buyListing(String seller, String wine, int quantity) {
