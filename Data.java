@@ -262,17 +262,56 @@ public class Data {
 					: "Wine image file not created ❌";
 			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅"
 					: "Messages file not created ❌";
+			if (folderCreated && usersFileCreated && winesFileCreated && sellsFileCreated && wineImageFileCreated && messagesFileCreated) {
 
-			System.out.println(String.format("%s", folderCreatedString));
-			System.out.println(String.format("%s", usersFileCreatedString));
-			System.out.println(String.format("%s", winesFileCreatedString));
-			System.out.println(String.format("%s", sellsFileCreatedString));
-			System.out.println(String.format("%s", wineImageFileCreatedString));
-			System.out.println(String.format("%s", messagesFileCreatedString));
+				System.out.println(String.format("%s", folderCreatedString));
+				System.out.println(String.format("%s", usersFileCreatedString));
+				System.out.println(String.format("%s", winesFileCreatedString));
+				System.out.println(String.format("%s", sellsFileCreatedString));
+				System.out.println(String.format("%s", wineImageFileCreatedString));
+				System.out.println(String.format("%s", messagesFileCreatedString));
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
 
+	public static boolean updateMessagesFile(String toUpdate, String updated) throws IOException {
+		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.MESSAGE_FILE)));
+
+		String line;
+		String input = "";
+		// read file line by line and replace
+		while ((line = file.readLine()) != null) {
+			input += line + "\n";
+		}
+		input = input.replace(toUpdate, updated);
+
+		FileOutputStream os = new FileOutputStream(new File(Constants.MESSAGE_FILE));
+		os.write(input.getBytes());
+
+		file.close();
+		os.close();
+		return true;
+	}
+
+	public static String readMessagesFromFile(String recipient) throws IOException {
+		String line = null;
+		BufferedReader br = null;
+		br = new BufferedReader(new FileReader(Constants.MESSAGE_FILE));
+		while ((line = br.readLine()) != null) {
+			if ((line.equals(""))) {
+				br.close();
+				return null;
+			}
+			String[] fileInfo = line.split(":");
+			if (fileInfo[0].equals(recipient)) {
+				br.close();
+				return line;
+			}
+		}
+		br.close();
+		return null;
 	}
 }
 

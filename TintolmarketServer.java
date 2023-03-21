@@ -224,16 +224,15 @@ public class TintolmarketServer implements Serializable {
 				}
 			} else if (request.operation == Request.Operation.TALK) {
 
-				// boolean messageSent = Logic.sendMessage(userId,
-				// request.user,request.message);
-				/*
-				 * if (messageSent) {
-				 * response.type = Response.Type.OK;
-				 * } else {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "Recetor não existe";
-				 * }
-				 */
+				boolean messageSent = Logic.sendMessage(userId, request.user, request.message);
+
+				if (messageSent) {
+					response.type = Response.Type.OK;
+				} else {
+					response.type = Response.Type.ERROR;
+					response.message = "Recetor não existe";
+				}
+
 			} else if (request.operation == Request.Operation.READ) {
 				// Hashtable<String, String[]> messages = Logic.getMessage(userId);
 				/*

@@ -119,4 +119,15 @@ public class Logic {
     public static String[] read(){
         return MsmContainer.getMSM(currentUser);
     }
+
+	public static boolean sendMessage(String sender, String recipient, String message) throws IOException {
+		String recipientInfo = Data.readUserInfoFromFile(recipient);
+		String recicpientMessages = Data.readMessagesFromFile(recipient);
+		if (recicpientMessages == null) {
+			return Data.writeOnFile(recipient + ":" + sender + ";" + message, Constants.MESSAGE_FILE);
+		}
+		String newRecicpientMessages = recicpientMessages + "," + sender + ";" + message;
+		return Data.updateMessagesFile(recicpientMessages, newRecicpientMessages);
+
+	}
 }

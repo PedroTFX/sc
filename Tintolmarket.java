@@ -152,13 +152,16 @@ public class Tintolmarket implements Serializable {
 	}
 
 	private Request createTalkRequest(String[] tokens) {
-		if (tokens.length != 3) {
+		if (tokens.length < 3) {
 			System.out.println("Utilização: talk <user> <message>");
 			return null;
 		}
 		String user = tokens[1];
-		String message = tokens[2];
-		return Request.createTalkOperation(user, message);
+		String message = "";
+		for(int i = 2; i < tokens.length; i++){
+			message += " " + tokens[i];
+		}
+		return Request.createTalkOperation(user, message.trim());
 	}
 
 	private Request createClassifyRequest(String[] tokens) {
