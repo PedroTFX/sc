@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
 
@@ -16,7 +17,7 @@ public class Response implements Serializable {
 	int price;
 	int quantity;
 	int balance;
-	Hashtable<String, String> messages;
+	Hashtable<String, ArrayList<String>> messages;
 
 	public void responseToString() {
 		System.out.println("RESPONSE:");

@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 public class Data {
@@ -262,7 +264,8 @@ public class Data {
 					: "Wine image file not created ❌";
 			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅"
 					: "Messages file not created ❌";
-			if (folderCreated && usersFileCreated && winesFileCreated && sellsFileCreated && wineImageFileCreated && messagesFileCreated) {
+			if (folderCreated && usersFileCreated && winesFileCreated && sellsFileCreated && wineImageFileCreated
+					&& messagesFileCreated) {
 
 				System.out.println(String.format("%s", folderCreatedString));
 				System.out.println(String.format("%s", usersFileCreatedString));
@@ -285,33 +288,55 @@ public class Data {
 		while ((line = file.readLine()) != null) {
 			input += line + "\n";
 		}
-		input = input.replace(toUpdate, updated);
+		input = input.replace(toUpdate + "\n", updated);
 
 		FileOutputStream os = new FileOutputStream(new File(Constants.MESSAGE_FILE));
 		os.write(input.getBytes());
 
 		file.close();
 		os.close();
+
 		return true;
 	}
 
-	public static String readMessagesFromFile(String recipient) throws IOException {
+	public static Hashtable<String, ArrayList<String>> readMessagesFromFile(String receiver) throws IOException {
+		Hashtable<String, ArrayList<String>> messages = new Hashtable<String, ArrayList<String>>();
 		String line = null;
-		BufferedReader br = null;
-		br = new BufferedReader(new FileReader(Constants.MESSAGE_FILE));
+		BufferedReader br = new BufferedReader(new FileReader(Constants.MESSAGE_FILE));
 		while ((line = br.readLine()) != null) {
-			if ((line.equals(""))) {
-				br.close();
-				return null;
-			}
 			String[] fileInfo = line.split(":");
-			if (fileInfo[0].equals(recipient)) {
-				br.close();
-				return line;
+			if(!fileInfo[0].equals(receiver)){
+				continue;
 			}
+
+			String sender = fileInfo[1];
+			String[] remainingTokens = Arrays.copyOfRange(fileInfo, 2, fileInfo.length);
+			String message = String.join(":", remainingTokens);
+			if(!messages.containsKey(sender)) {
+				messages.put(sender, new ArrayList<String>());
+			}
+
+			messages.get(sender).add(Data.unescape(message));
 		}
 		br.close();
-		return null;
+
+		// Remover mensagens do ficheiro
+		for (String sender : messages.keySet()) {
+			for(String message : messages.get(sender)) {
+				String toUpdate = String.format("%s:%s:%s", receiver, sender, escape(message));
+				Data.updateMessagesFile(toUpdate, "");
+			}
+		}
+
+		return messages;
+	}
+
+	static String escape(String message) {
+		return message.replace(":", "\\:");
+	}
+
+	static String unescape(String message) {
+		return message.replace("\\:", ":");
 	}
 }
 

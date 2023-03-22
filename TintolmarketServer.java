@@ -191,6 +191,7 @@ public class TintolmarketServer implements Serializable {
 					response.type = Response.Type.ERROR;
 					response.message = "Este vinho nao existe";
 				}
+
 				String wineInfo = Data.readWineInfoFromFile(request.wine);
 				String SellsInfo = null;
 				if (wineInfo != null) {
@@ -236,7 +237,7 @@ public class TintolmarketServer implements Serializable {
 			} else if (request.operation == Request.Operation.READ) {
 				response.messages = Logic.getMessages(userId);
 
-				if (response.messages != null) {
+				if (response.messages.size() > 0) {
 					response.type = Response.Type.READ;
 				} else {
 					response.type = Response.Type.ERROR;

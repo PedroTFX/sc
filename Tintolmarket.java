@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -117,7 +118,12 @@ public class Tintolmarket implements Serializable {
 					System.out.println("MENSAGENS:");
 					Set<String> senders = response.messages.keySet();
 					for (String sender : senders) {
-						System.out.println(sender + " : " + response.messages.get(sender));
+						ArrayList<String> messages = response.messages.get(sender);
+						System.out.println(sender + "....");
+						for (int i = 0; i < messages.size(); i++) {
+							System.out.println(messages.get(i));
+						}
+						System.out.println();
 					}
 					System.out.println();
 				}

@@ -1,5 +1,7 @@
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Set;
 
 public class Logic {
 
@@ -120,32 +122,10 @@ public class Logic {
     }
 
 	public static boolean sendMessage(String sender, String recipient, String message) throws IOException {
-		String recipientInfo = Data.readUserInfoFromFile(recipient);
-		String recicpientMessages = Data.readMessagesFromFile(recipient);
-		if (recicpientMessages == null) {
-			return Data.writeOnFile(recipient + ":" + sender + ";" + message, Constants.MESSAGE_FILE);
-		}
-		String newRecicpientMessages = recicpientMessages + "," + sender + ";" + message;
-		return Data.updateMessagesFile(recicpientMessages, newRecicpientMessages);
+		return Data.writeOnFile(recipient + ":" + sender + ":" + Data.escape(message), Constants.MESSAGE_FILE);
 	}
 
-	public static Hashtable<String, String> getMessages(String userId) throws IOException {
-		Hashtable<String, String> messagesToSendHashtable = new Hashtable<>();
-		String messagesList = Data.readMessagesFromFile(userId);
-		if (messagesList == null) {
-			return null;
-		}
-		String[] messages = messagesList.split(":");
-		String[] messagesToRead = messages[1].split(",");
-		for (int i = 0; i < messagesToRead.length; i++) {
-			String[] tokens = messagesToRead[i].split(";");
-			if (messagesToSendHashtable.containsKey(tokens[0])) {
-				messagesToSendHashtable.put(tokens[0], messagesToSendHashtable.get(tokens[0]) + "|" + tokens[1]);
-			} else{
-				messagesToSendHashtable.put(tokens[0], tokens[1]);
-			}
-		}
-		Data.updateMessagesFile(messagesList, "");
-		return messagesToSendHashtable;
+	public static Hashtable<String, ArrayList<String>> getMessages(String userId) throws IOException {
+		return Data.readMessagesFromFile(userId);
 	}
 }
