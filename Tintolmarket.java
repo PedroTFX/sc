@@ -14,6 +14,7 @@ public class Tintolmarket implements Serializable {
 	private Socket clientSocket = null;
 	private ObjectInputStream in = null;
 	private ObjectOutputStream out = null;
+	private boolean close = false;
 
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
@@ -83,7 +84,7 @@ public class Tintolmarket implements Serializable {
 	}
 
 	private void run() {
-		while (true) {
+		while (!close) {
 
 			Request request;
 			do {
@@ -128,13 +129,20 @@ public class Tintolmarket implements Serializable {
 					System.out.println();
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
+				close = true;
 			}
 		}
 	}
 
 	private Request readRequest() {
-		String line = sc.nextLine();
+		String line = null;
+		try {
+			line = sc.nextLine();
+
+		} catch (Exception e) {
+			disconnectFromServer();
+		}
 		String[] tokens = line.split(" ");
 		String operation = tokens[0];
 
@@ -282,6 +290,7 @@ public class Tintolmarket implements Serializable {
 	private void disconnectFromServer() {
 		try {
 			clientSocket.close();
+			System.exit(1);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

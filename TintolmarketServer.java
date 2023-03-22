@@ -79,7 +79,7 @@ public class TintolmarketServer implements Serializable {
 			listen();
 
 			// Close socket and thread
-			closeServer();
+			closeServerThread();
 		}
 
 		private void init() {
@@ -141,7 +141,7 @@ public class TintolmarketServer implements Serializable {
 						WineImage.sendImage(image, outStream, wineImageName);
 					}
 				} catch (Exception e1) {
-					e1.printStackTrace();
+					close = true;
 				}
 			}
 		}
@@ -306,8 +306,9 @@ public class TintolmarketServer implements Serializable {
 			return response;
 		}
 
-		private void closeServer() {
+		private void closeServerThread() {
 			try {
+				System.out.println("closing thread for " + userId);
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
