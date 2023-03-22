@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.Set;
 
 public class Tintolmarket implements Serializable {
 	private static Scanner sc = new Scanner(System.in);
@@ -111,7 +112,15 @@ public class Tintolmarket implements Serializable {
 					WineImage.writeImageToFile(folder, image, WineImage.getImageExtension(response.image));
 					System.out.println("after");
 				}
-				response.responseToString();
+				//response.responseToString();
+				if(response.type == Response.Type.READ){
+					System.out.println("MENSAGENS:");
+					Set<String> senders = response.messages.keySet();
+					for (String sender : senders) {
+						System.out.println(sender + " : " + response.messages.get(sender));
+					}
+					System.out.println();
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -144,7 +153,7 @@ public class Tintolmarket implements Serializable {
 	}
 
 	private Request createReadRequest(String[] tokens) {
-		if (tokens.length != 2) {
+		if (tokens.length != 1) {
 			System.out.println("Utilização: read");
 			return null;
 		}

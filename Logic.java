@@ -1,5 +1,5 @@
-import java.io.File;
 import java.io.IOException;
+import java.util.Hashtable;
 
 public class Logic {
 
@@ -78,7 +78,6 @@ public class Logic {
 		if (infoTokens.length == 3){
 			return infoTokens[2];
 		}
-		//return String.valueOf(currentUser.getBalance());
 		return null;
     }
 
@@ -128,6 +127,25 @@ public class Logic {
 		}
 		String newRecicpientMessages = recicpientMessages + "," + sender + ";" + message;
 		return Data.updateMessagesFile(recicpientMessages, newRecicpientMessages);
+	}
 
+	public static Hashtable<String, String> getMessages(String userId) throws IOException {
+		Hashtable<String, String> messagesToSendHashtable = new Hashtable<>();
+		String messagesList = Data.readMessagesFromFile(userId);
+		if (messagesList == null) {
+			return null;
+		}
+		String[] messages = messagesList.split(":");
+		String[] messagesToRead = messages[1].split(",");
+		for (int i = 0; i < messagesToRead.length; i++) {
+			String[] tokens = messagesToRead[i].split(";");
+			if (messagesToSendHashtable.containsKey(tokens[0])) {
+				messagesToSendHashtable.put(tokens[0], messagesToSendHashtable.get(tokens[0]) + "|" + tokens[1]);
+			} else{
+				messagesToSendHashtable.put(tokens[0], tokens[1]);
+			}
+		}
+		Data.updateMessagesFile(messagesList, "");
+		return messagesToSendHashtable;
 	}
 }

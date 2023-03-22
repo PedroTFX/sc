@@ -4,7 +4,7 @@ import java.util.Set;
 
 public class Response implements Serializable {
 	enum Type {
-		OK, ERROR, VIEW
+		OK, ERROR, VIEW, READ
 	}
 
 	Type type;
@@ -16,7 +16,7 @@ public class Response implements Serializable {
 	int price;
 	int quantity;
 	int balance;
-	Hashtable<String, String[]> messages;
+	Hashtable<String, String> messages;
 
 	public void responseToString() {
 		System.out.println("RESPONSE:");
@@ -28,15 +28,13 @@ public class Response implements Serializable {
 		System.out.println("Seller: " + seller);
 		System.out.println("Quantity: " + quantity);
 		System.out.println("Balance: " + balance);
-		if(messages != null){
+/* 		if(messages != null){
 			Set<String> users = messages.keySet();
 			for (String user : users) {
-				String[] userMessages = messages.get(user);
-				for (int i = 0; i < userMessages.length; i++) {
-					System.out.print(userMessages[i] + " ; ");
-				}
+				String userMessages = messages.get(user);
+				System.out.println(user + " " + userMessages);
 			}
-		}
+		} */
 	}
 
 	private Response(Type operation) {
