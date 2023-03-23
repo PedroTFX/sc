@@ -79,8 +79,16 @@ public class User {
 		}
 	}
 
-    public int getBalance() {
-        return balance;
+    public String getBalance() throws IOException {
+		String info = Data.readUserInfoFromFile(getId());
+		if (info == null){
+			return null;
+		}
+		String[] infoTokens = info.split(":");
+		if (infoTokens.length == 3){
+			return infoTokens[2];
+		}
+		return null;
     }
 
 	public boolean updateUser(String user, String password, int balance, String wines) throws IOException {

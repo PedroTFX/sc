@@ -21,7 +21,7 @@ public class Listings {
      * @return
      */
     public static boolean available(String seller, String wine, int quantity) {
-        if(seller == null || wine == null || quantity < 0){
+        if(seller == null || wine == null || quantity <= 0){
             return false;
         }
         String listingID = seller + ":" + wine;
@@ -57,34 +57,34 @@ public class Listings {
      * @throws IOException
      */
     public static boolean addListing(String userId, String wine, int quantity, int value) throws IOException {
-		//System.out.println("entramos!!!!!!!!!!!!!!!!!!!!!");
-		String sell = Data.readSellInfo(wine);
-		//System.out.println("SELL: "+ sell);
-		if (sell != null) {
-			String[] sellTokens = sell.split(":");
-			sellTokens[2] = String.valueOf(quantity + Integer.parseInt(sellTokens[2]));
-			return Data.updateImageSellsFile(sell, String.join(":", sellTokens));
-		}
+        // Data.readSellInfo could return an Array of all the listing form a user of that wine
+        // if it does we have to see if the value is the same, what if the value is not???
+        //TODO UPDATE THE READSELLINFO FUCNTION IN THE DATA
+        String sell = Data.readSellInfo(userId, wine);
 
-		return Data.writeOnFile(wine + ":" + userId + ":" + String.valueOf(quantity) + ":" + String.valueOf(value), Constants.SELLS_FILE);
-
-        /* if(wineListings.containsKey(listingID)){
-            value = Integer.parseInt(wineListings.get(listingID)) + quantity;
+        if(sell != null){
+            // get value of wine and check if the available wines have the same value
+            int valueOfWine = Integer.parseInt(sell.split(":")[3]);
+            if (valueOfWine == value) {
+                String[] sellTokens = sell.split(":");
+                sellTokens[2] = String.valueOf(quantity + Integer.parseInt(sellTokens[2]));
+                return Data.updateSellsFile(sell, String.join(":", sellTokens));
+            }
         }
-        wineListings.put(listingID, Integer.toString(value));
-        return wineListings.containsKey(listingID) && wineListings.get(listingID).equals(Integer.toString(value)); */
-    }
+        // case sell is null or value isnt the same as the one in the file
+		return Data.writeOnFile(wine + ":" + userId + ":" + String.valueOf(quantity) + ":" + String.valueOf(value), Constants.SELLS_FILE);
+    }   
 
     public static boolean buyListing(String seller, String wine, int quantity) {
-        if(quantity < 0 || !available(seller, wine, quantity)){
+        if(!available(seller, wine, quantity)){
             return false;
         }
         String listingID = seller + ":" + wine;
-        int value = Integer.parseInt(wineListings.get(listingID)) - quantity;
-        if(value == 0){
+        int available_quantity = Integer.parseInt(wineListings.get(listingID)) - quantity;
+        if(available_quantity == 0){
             wineListings.remove(listingID);
         }else{
-            wineListings.put(listingID, Integer.toString(value));
+            wineListings.put(listingID, Integer.toString(available_quantity));
         }
         return Data.updateListings(wineListings);
     }

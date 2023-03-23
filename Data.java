@@ -59,6 +59,7 @@ public class Data {
 		return null;
 	}
 
+	// wtf is going on here
 	public static boolean confirmPassword(String user, String password) throws IOException {
 		String info = readUserInfoFromFile(user);
 		String DBPass = null;
@@ -139,25 +140,7 @@ public class Data {
 		return true;
 	}
 
-	public static void addNewWine() {
-		// porto:portinho.jpg
-	}
 
-	public static Hashtable<String, String> getListings() {
-		return null;
-	}
-
-	public static boolean updateListings(Hashtable<String, String> wineListings) {
-		return false;
-	}
-
-	public static boolean sendMSM(String string) {
-		return false;
-	}
-
-	public static String[] readMSM(String id) {
-		return null;
-	}
 
 	public static String readImageNameFromWineImageFile(String exists) throws IOException {
 		String line = null;
@@ -178,7 +161,7 @@ public class Data {
 		return null;
 	}
 
-	public static String readSellInfo(String wine) throws IOException {
+	public static String readSellInfo(String user, String wine) throws IOException {
 		String line = null;
 		BufferedReader br = null;
 		br = new BufferedReader(new FileReader(Constants.SELLS_FILE));
@@ -188,7 +171,7 @@ public class Data {
 				return null;
 			}
 			String[] fileInfo = line.split(":");
-			if (fileInfo[0].equals(wine)) {
+			if (fileInfo[0].equals(wine) && fileInfo[1].equals(user)) {
 				br.close();
 				return line;
 			}
@@ -197,7 +180,8 @@ public class Data {
 		return null;
 	}
 
-	public static boolean updateImageSellsFile(String toUpdate, String updated) throws IOException {
+	// TODO UPDATE FUNCTION NAME
+	public static boolean updateSellsFile(String toUpdate, String updated) throws IOException {
 		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.SELLS_FILE)));
 
 		String line;
@@ -217,10 +201,10 @@ public class Data {
 	}
 
 	public static boolean updateWineStock(String wine, String user, int newStock) throws IOException {
-		String userInfo = Data.readSellInfo(wine);
+		String userInfo = Data.readSellInfo(user, wine);
 		String[] userInfoTokens = userInfo.split(":");
 		userInfoTokens[2] = String.valueOf(newStock);
-		return Data.updateImageSellsFile(userInfo, String.join(":", userInfoTokens));
+		return Data.updateSellsFile(userInfo, String.join(":", userInfoTokens));
 	}
 
 	public static boolean updateUserBalance(String userId, int newSellerBalance) throws IOException {
@@ -256,14 +240,14 @@ public class Data {
 					.createNewFile();
 			Boolean messagesFileCreated = new File(Constants.MESSAGE_FILE).createNewFile();
 
-			String folderCreatedString = folderCreated ? "Folder created ✅" : "Folder not created ❌";
-			String usersFileCreatedString = usersFileCreated ? "Users file created ✅" : "Users file not created ❌";
-			String winesFileCreatedString = winesFileCreated ? "Wines file created ✅" : "Wines file not created ❌";
-			String sellsFileCreatedString = sellsFileCreated ? "Sales file created ✅" : "Sales file not created ❌";
-			String wineImageFileCreatedString = wineImageFileCreated ? "Wine image file created ✅"
-					: "Wine image file not created ❌";
-			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅"
-					: "Messages file not created ❌";
+			String folderCreatedString = folderCreated ? "Folder created" : "Folder not created";
+			String usersFileCreatedString = usersFileCreated ? "Users file created" : "Users file not created";
+			String winesFileCreatedString = winesFileCreated ? "Wines file created" : "Wines file not created";
+			String sellsFileCreatedString = sellsFileCreated ? "Sales file created" : "Sales file not created";
+			String wineImageFileCreatedString = wineImageFileCreated ? "Wine image file created"
+					: "Wine image file not created";
+			String messagesFileCreatedString = messagesFileCreated ? "Messages file created"
+					: "Messages file not created";
 			if (folderCreated && usersFileCreated && winesFileCreated && sellsFileCreated && wineImageFileCreated
 					&& messagesFileCreated) {
 
@@ -309,9 +293,11 @@ public class Data {
 				continue;
 			}
 
+			// update msm
 			String sender = fileInfo[1];
 			String[] remainingTokens = Arrays.copyOfRange(fileInfo, 2, fileInfo.length);
 			String message = String.join(":", remainingTokens);
+
 			if(!messages.containsKey(sender)) {
 				messages.put(sender, new ArrayList<String>());
 			}

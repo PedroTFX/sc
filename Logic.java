@@ -1,7 +1,4 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Set;
 
 public class Logic {
 
@@ -9,13 +6,14 @@ public class Logic {
 
     public User autheticate(String user , String password) throws IOException{
         return (currentUser = new User(user, password));
-    }
+    } 
 
     /*
      * add <wine> <image> - adiciona um novo vinho identificado por wine, associado à imagem
      * image.    Caso  já  exista  um  vinho  com  o  mesmo  nome  deve  ser  devolvido  um  erro.
      * Inicialmente o vinho não terá qualquer classificação e o número de unidades disponíveis
      * será zero.
+     * TODO Update fuction for using currentUser from authenicate
      */
     public static boolean addWine(String wine, String user) throws IOException{
         return Wine.addWine(wine, user);
@@ -27,12 +25,12 @@ public class Logic {
      * erro.
      * TODO Update fuction for using currentUser from authenicate
      */
-    public static boolean sellWine(String userId, String wine, int quantity, int value) throws IOException {
+    public static boolean sellWine(String wine, int quantity, int value) throws IOException {
         //checkif wine exists
         if(!Wine.wineExists(wine) || quantity < 0){
             return false;
         }
-		return Listings.addListing(userId, wine, quantity, value);
+		return Listings.addListing(currentUser.getId(), wine, quantity, value);
 	}
 
     /**
@@ -71,16 +69,8 @@ public class Logic {
      * @return
      * @throws IOException
      */
-    public static String wallet(String user) throws IOException{
-		String info = Data.readUserInfoFromFile(user);
-		if (info == null){
-			return null;
-		}
-		String[] infoTokens = info.split(":");
-		if (infoTokens.length == 3){
-			return infoTokens[2];
-		}
-		return null;
+    public static String wallet() throws IOException{
+		return currentUser.getBalance();
     }
 
     /**
@@ -120,12 +110,4 @@ public class Logic {
     public static String[] read(){
         return MsmContainer.getMSM(currentUser);
     }
-
-	public static boolean sendMessage(String sender, String recipient, String message) throws IOException {
-		return Data.writeOnFile(recipient + ":" + sender + ":" + Data.escape(message), Constants.MESSAGE_FILE);
-	}
-
-	public static Hashtable<String, ArrayList<String>> getMessages(String userId) throws IOException {
-		return Data.readMessagesFromFile(userId);
-	}
 }
