@@ -9,7 +9,7 @@
 			"type": "java",
 			"request": "launch",
 			"mainClass": "Tintolmarket",
-			"args": "127.0.0.1:12345 joao andr"
+			"args": "127.0.0.1:12345 Cristiane deusmane120"
 		},
 		{
 			"name": "Server",
