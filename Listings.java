@@ -58,11 +58,12 @@ public class Listings {
      */
     public static boolean addListing(String userId, String wine, int quantity, int value) throws IOException {
 		//System.out.println("entramos!!!!!!!!!!!!!!!!!!!!!");
-		String sell = Data.readSellInfo(wine);
+		String sell = Data.readSellInfo(wine,userId);
 		//System.out.println("SELL: "+ sell);
 		if (sell != null) {
 			String[] sellTokens = sell.split(":");
 			sellTokens[2] = String.valueOf(quantity + Integer.parseInt(sellTokens[2]));
+			sellTokens[3] = String.valueOf(value);
 			return Data.updateImageSellsFile(sell, String.join(":", sellTokens));
 		}
 

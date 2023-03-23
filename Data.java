@@ -172,7 +172,7 @@ public class Data {
 		return null;
 	}
 
-	public static String readSellInfo(String wine) throws IOException {
+	public static String readSellInfo(String wine, String seller) throws IOException {
 		String line = null;
 		BufferedReader br = null;
 		br = new BufferedReader(new FileReader(Constants.SELLS_FILE));
@@ -182,7 +182,7 @@ public class Data {
 				return null;
 			}
 			String[] fileInfo = line.split(":");
-			if (fileInfo[0].equals(wine)) {
+			if (fileInfo[0].equals(wine) && fileInfo[1].equals(seller)) {
 				br.close();
 				return line;
 			}
@@ -210,8 +210,8 @@ public class Data {
 		return true;
 	}
 
-	public static boolean updateWineStock(String wine, String user, int newStock) throws IOException {
-		String userInfo = Data.readSellInfo(wine);
+	public static boolean updateWineStock(String wine, String user, int newStock, String seller) throws IOException {
+		String userInfo = Data.readSellInfo(wine, seller);
 		String[] userInfoTokens = userInfo.split(":");
 		userInfoTokens[2] = String.valueOf(newStock);
 		return Data.updateImageSellsFile(userInfo, String.join(":", userInfoTokens));

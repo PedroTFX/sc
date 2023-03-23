@@ -193,18 +193,12 @@ public class TintolmarketServer implements Serializable {
 				}
 
 				String wineInfo = Data.readWineInfoFromFile(request.wine);
-				String sellInfo = Data.readSellInfo(request.wine);
-				/* if(sellInfo == null){
-					response.type = Response.Type.ERROR;
-					response.message = "nao esta a venda";
-				} */
-				String SellsInfo = null;
 				if (wineInfo != null) {
 					String[] wineInfoTokens = wineInfo.split(":");
 					existsTokens = exists.split(":");
 					wineImageNameToSend = Data.readImageNameFromWineImageFile(wineInfoTokens[0]);
 					response.type = Response.Type.VIEW;
-					response.seller = wineInfoTokens[1]/* sellInfo.split(SellsInfo)[1] */;
+					response.seller = wineInfoTokens[1];
 					response.wine = request.wine;
 					response.image = wineImageNameToSend;
 					if (wineInfoTokens.length > 3){
@@ -255,7 +249,7 @@ public class TintolmarketServer implements Serializable {
 				String wine = request.wine;
 
 				// Se este vinho não estiver à venda
-				String sellInfo = Data.readSellInfo(request.wine);
+				String sellInfo = Data.readSellInfo(request.wine, request.seller);
 				if (sellInfo == null) {
 					response.type = Response.Type.ERROR;
 					response.message = "Nao ha esse vinho a venda";
@@ -296,7 +290,7 @@ public class TintolmarketServer implements Serializable {
 				}
 
 				// Autalizar stock de vinho na dase de dados
-				Data.updateWineStock(wine, userId, newStock);
+				Data.updateWineStock(wine, userId, newStock, seller);
 
 				// Atualizar saldo do vendedor na dase de dados
 				Data.updateUserBalance(seller, newSellerBalance);

@@ -47,28 +47,6 @@ public class User {
         return Data.registerUser(user + ":" + password + ":" + 200);
     }
 
-	// TODO: UPDATE FUNCITONS FOR PROPER USE
-
-    // private static String getWines(String user) throws IOException {
-    //     return currentUser.getWines();
-    // }
-
-
-
-    // private static boolean hasWine(String user, String wine){
-    //     String[] wines = getWines(user).split(",");
-    //     if(wines.length < 0){
-    //         return false;
-    //     }
-
-    //     for (String vinho : wines) {
-    //         if(vinho.equals(wine)){
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
 	public static void main(String[] args) {
 		//test register authentication and isRegistered
 		try {
