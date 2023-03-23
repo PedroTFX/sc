@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -11,11 +10,6 @@ import java.util.Arrays;
 import java.util.Hashtable;
 
 public class Data {
-
-	public static final String USER_FILE = "users.txt";
-	public static final String WINE_FILE = "wines.txt";
-	public static final String WINE_IMAGE_FILE = "wine_image.txt";
-	public static final String STARTING_BALANCE = "200";
 
 	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws IOException {
 		/*
