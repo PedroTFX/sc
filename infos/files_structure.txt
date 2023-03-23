@@ -1,0 +1,9 @@
+USER-> user:password:wallet
+
+LISTAS-> wine:seller:quantity:value
+
+WINES-> wine:user:avaliacoes,avaliacoes:media_classificacoes
+
+IMAGEM-> wine:imagem
+
+MENSAGENS-> destinatario:remetente;mensagem,remetente;mensagem
