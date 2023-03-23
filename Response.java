@@ -29,13 +29,6 @@ public class Response implements Serializable {
 		System.out.println("Seller: " + seller);
 		System.out.println("Quantity: " + quantity);
 		System.out.println("Balance: " + balance);
-/* 		if(messages != null){
-			Set<String> users = messages.keySet();
-			for (String user : users) {
-				String userMessages = messages.get(user);
-				System.out.println(user + " " + userMessages);
-			}
-		} */
 	}
 
 	private Response(Type operation) {

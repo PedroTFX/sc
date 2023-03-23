@@ -114,7 +114,6 @@ public class Tintolmarket implements Serializable {
 					WineImage.writeImageToFile(folder, image, WineImage.getImageExtension(response.image));
 					System.out.println("after");
 				}
-				//response.responseToString();
 				if(response.type == Response.Type.READ){
 					System.out.println("MENSAGENS:");
 					Set<String> senders = response.messages.keySet();
@@ -128,6 +127,7 @@ public class Tintolmarket implements Serializable {
 					}
 					System.out.println();
 				}
+				response.responseToString();
 			} catch (Exception e) {
 				//e.printStackTrace();
 				close = true;

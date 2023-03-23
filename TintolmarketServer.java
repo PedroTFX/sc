@@ -193,16 +193,23 @@ public class TintolmarketServer implements Serializable {
 				}
 
 				String wineInfo = Data.readWineInfoFromFile(request.wine);
+				String sellInfo = Data.readSellInfo(request.wine);
+				/* if(sellInfo == null){
+					response.type = Response.Type.ERROR;
+					response.message = "nao esta a venda";
+				} */
 				String SellsInfo = null;
 				if (wineInfo != null) {
 					String[] wineInfoTokens = wineInfo.split(":");
 					existsTokens = exists.split(":");
 					wineImageNameToSend = Data.readImageNameFromWineImageFile(wineInfoTokens[0]);
 					response.type = Response.Type.VIEW;
-					response.seller = "ninguem";
+					response.seller = wineInfoTokens[1]/* sellInfo.split(SellsInfo)[1] */;
 					response.wine = request.wine;
 					response.image = wineImageNameToSend;
-					response.averageWineClassification = Double.parseDouble(wineInfoTokens[3]);
+					if (wineInfoTokens.length > 3){
+						response.averageWineClassification = Double.parseDouble(wineInfoTokens[3]);
+					}
 				}
 
 			} else if (request.operation == Request.Operation.WALLET) {
