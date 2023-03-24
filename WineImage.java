@@ -91,7 +91,6 @@ public class WineImage {
 		Path basePath = Paths.get(new File("").getAbsolutePath());
 		Path imagePath = Paths.get(ImageName);
 		Path fullPath = basePath.resolve(imagePath);
-		System.out.println("fullPath: " + fullPath.toString());
 		return fullPath.toString();
 	}
 

@@ -215,7 +215,7 @@ public class TintolmarketServer implements Serializable {
 					response.balance = -1;
 				}
 			} else if (request.operation == Request.Operation.CLASSIFY) {
-				if (request.stars < 0 || request.stars > 5){
+				if (request.stars < 1 || request.stars > 5){
 					response.type = Response.Type.ERROR;
 					response.message = "classificacao invalida. tem de ser entre 1 e 5";
 				}

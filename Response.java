@@ -21,13 +21,27 @@ public class Response implements Serializable {
 	public void responseToString() {
 		System.out.println("RESPONSE:");
 		System.out.println("Type: " + type.toString());
-		System.out.println("Wine: " + wine);
-		System.out.println("Error message: " + message);
-		System.out.println("Image name: " + image);
-		System.out.println("avgClassification: " + averageWineClassification);
-		System.out.println("Seller: " + seller);
-		System.out.println("Quantity: " + quantity);
-		System.out.println("Balance: " + balance);
+		if(this.wine != null){
+			System.out.println("Wine: " + wine);
+		}
+		if (this.message != null) {
+			System.out.println("Error message: " + message);
+		}
+		if (this.image != null) {
+			System.out.println("Image name: " + image);
+		}
+		if (this.averageWineClassification > -1) {
+			System.out.println("avgClassification: " + averageWineClassification);
+		}
+		if (this.seller != null) {
+			System.out.println("Seller: " + seller);
+		}
+		if (this.quantity > -1) {
+			System.out.println("Quantity: " + quantity);
+		}
+		if (this.balance > -1) {
+			System.out.println("Balance: " + balance);
+		}
 	}
 
 	private Response(Type operation) {
