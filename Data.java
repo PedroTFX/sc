@@ -12,25 +12,6 @@ import java.util.Hashtable;
 public class Data {
 
 	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws IOException {
-		/*
-		 * BufferedReader file = new BufferedReader(new FileReader(new
-		 * File(WINE_IMAGE_FILE)));
-		 *
-		 * String line;
-		 * String input = "";
-		 * // read file line by line and replace
-		 * while ((line = file.readLine()) != null) {
-		 * input += line + "\n";
-		 * }
-		 * input = input.replace(lineToUpdate, updatedLine);
-		 *
-		 * FileOutputStream os = new FileOutputStream(new File(WINE_IMAGE_FILE));
-		 * os.write(input.getBytes());
-		 *
-		 * file.close();
-		 * os.close();
-		 * return true;
-		 */
 		return writeOnFile(updatedLine, Constants.WINE_IMAGE_FILE);
 	}
 
@@ -62,7 +43,6 @@ public class Data {
 		} else {
 			return writeOnFile(user + ":" + password + ":" + Constants.STARTING_BALANCE, Constants.USER_FILE);
 		}
-		// return readUserInfoFromFile(user).split(":")[1].equals(password);
 	}
 
 	public static boolean registerUser(String userInfo) throws IOException {
@@ -131,26 +111,6 @@ public class Data {
 		bw.newLine();
 		bw.close();
 		return true;
-	}
-
-	public static void addNewWine() {
-		// porto:portinho.jpg
-	}
-
-	public static Hashtable<String, String> getListings() {
-		return null;
-	}
-
-	public static boolean updateListings(Hashtable<String, String> wineListings) {
-		return false;
-	}
-
-	public static boolean sendMSM(String string) {
-		return false;
-	}
-
-	public static String[] readMSM(String id) {
-		return null;
 	}
 
 	public static String readImageNameFromWineImageFile(String exists) throws IOException {
@@ -333,9 +293,3 @@ public class Data {
 		return message.replace("\\:", ":");
 	}
 }
-
-/*
- * wine1:100;200;2,3,4
- * portinho:69,69,3,5,1,2
- * benfica:7,7,1,2,3,4,5
- */

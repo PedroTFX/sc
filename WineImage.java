@@ -110,7 +110,6 @@ public class WineImage {
 		return folder;
 	}
 
-	//DOESNT NEED TIMEMILLISECONDS THERE IS A UNIQUE NAME FOR EACH IMAGE AND IT IS THE NAME OF THE WINE
 	public static String writeImageToFile(File folder, BufferedImage image, String extension) throws IOException {
 		String fileName = /* "server-image-" */folder.toString() + System.currentTimeMillis() + "." + extension;
 		//String fileName = "portao.jpg";

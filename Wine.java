@@ -1,44 +1,6 @@
 import java.io.IOException;
 
 public class Wine {
-
-	String name;
-	String image;
-	int stock;
-	int price;
-
-/* 	public Wine(String name, String image) throws IOException {
-		if (wineExists(name)) {
-			return;
-		}
-		this.name = name;
-		this.image = image;
-		stock = price = 0;
-	} */
-
-	public String toString() {
-		return String.format("%s | %s | %d", name, image);
-	}
-
-	// THIS BELONGS ON LISTINGS after making it work like it should
-	// public static boolean boughtWasWine(String seller, String wine, int quantity)
-	// throws IOException {
-	// String wineInfo = Data.readWineInfoFromFile(wine);
-	// System.out.println(wineInfo);
-	// String userInfo = Data.readUserInfoFromFile(seller);
-	// System.out.println(userInfo);
-	// String[] userTokens = userInfo.split(":");
-	// String[] wineTokens = wineInfo.split(":");
-	// wineTokens[QUANTITY] = String.valueOf(Integer.parseInt(wineTokens[QUANTITY])
-	// - quantity);
-	// userTokens[BALANCE] = String.valueOf(Integer.parseInt(userTokens[BALANCE]) -
-	// Integer.parseInt(wineTokens[VALUE]) * quantity);
-	// String newWineLine = String.join(":", wineTokens);
-	// String newUserLine = String.join(":", userTokens);
-	// return Data.updateLineWines(wineInfo, newWineLine) &&
-	// Data.updateLineUsers(userInfo, newUserLine);
-	// }
-
 	/**
 	 * Adds the classification to the classification list and the new avg value calculated
 	 * returns true if the classification was added
@@ -56,8 +18,6 @@ public class Wine {
 			return Data.updateLineWines(info, newLine.toString());
 		}
 
-		//avg and write
-		//TODO CHANGE TO ONLY CALCULATE AVG ON VIEW AND NOT ON CLASSIFY
 		int sumClassifications = Wine.sumClassifications(infoTokens[2]) + classification;
 		double avgClassification = (double)sumClassifications / (infoTokens[2].split(",").length + 1);
 
