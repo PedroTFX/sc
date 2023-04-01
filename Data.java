@@ -12,192 +12,184 @@ import java.util.Hashtable;
 
 public class Data {
 
-	public static final String USER_FILE = "users.txt";
-	public static final String WINE_FILE = "wines.txt";
-	public static final String WINE_IMAGE_FILE = "wine_image.txt";
+	public static final String IMAGES_FOLDER = "server-images\\";
+	public static final String DB_FOLDER = "db";
+	public static final String USER_FILE = DB_FOLDER + "\\" + "users.txt";
+	public static final String WINE_FILE = DB_FOLDER + "\\" + "wines.txt";
+	public static final String SELLS_FILE = DB_FOLDER + "\\" + "sells.txt";
+	public static final String WINE_IMAGE_FILE = DB_FOLDER + "\\" + "wine_image.txt";
+	public static final String MESSAGE_FILE = DB_FOLDER + "\\" + "messages.txt";
 	public static final String STARTING_BALANCE = "200";
 
 	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws IOException {
-		/*
-		 * BufferedReader file = new BufferedReader(new FileReader(new
-		 * File(WINE_IMAGE_FILE)));
-		 *
-		 * String line;
-		 * String input = "";
-		 * // read file line by line and replace
-		 * while ((line = file.readLine()) != null) {
-		 * input += line + "\n";
-		 * }
-		 * input = input.replace(lineToUpdate, updatedLine);
-		 *
-		 * FileOutputStream os = new FileOutputStream(new File(WINE_IMAGE_FILE));
-		 * os.write(input.getBytes());
-		 *
-		 * file.close();
-		 * os.close();
-		 * return true;
-		 */
-		return writeOnFile(updatedLine, Constants.WINE_IMAGE_FILE);
+		return writeOnFile(updatedLine, WINE_IMAGE_FILE);
+	}
+
+	/**
+	 * Reads from the file (String filename) for the keywords (String keyWords) that are mapped 
+	 * like this: keyword1:keyword2:keyword3
+	 * the function divides the keyWords by ":" and searches for the line that contains all the keywords in order
+	 * @param key
+	 * @return
+	 * @throws IOException
+	 */
+	private static String findInFile(String keyWords, String filename) throws IOException{
+		// init
+		String line = null;
+		BufferedReader buffer = new BufferedReader(new FileReader(filename));
+		boolean found = false;
+
+		// read buffer line by line till find a line that contains all the keywords
+		while ((line = buffer.readLine()) != null && !found) {
+			if ((line.equals(""))) {
+				buffer.close();
+				return null;
+			}
+
+			// split the line by ":" and check size
+			String[] userInfo = line.split(":");
+			String[] keyWordsArray = keyWords.split(":");
+			if(keyWordsArray.length > userInfo.length){
+				buffer.close();
+				return null;
+			}
+			
+			// check if the line contains all the keywords in order
+			for(int i = 0; i < keyWordsArray.length; i++){
+				if(!userInfo[i].equals(keyWordsArray[i])){
+					break;
+				}
+				if(i == keyWordsArray.length - 1){
+					found = true;
+					buffer.close();
+					return line;
+				}
+			}
+		}
+		
+		buffer.close();
+		return null;
 	}
 
 	public static String readUserInfoFromFile(String key) throws IOException {
-		String line = null;
-		BufferedReader br = null;
-		br = new BufferedReader(new FileReader(Constants.USER_FILE));
-		while ((line = br.readLine()) != null) {
-			if ((line.equals(""))) {
-				br.close();
-				return null;
-			}
-			String[] userInfo = line.split(":");
-			if (userInfo[0].equals(key)) {
-				br.close();
-				return line;
-			}
-		}
-		br.close();
-		return null;
+		return findInFile(key, USER_FILE);
 	}
 
-	// wtf is going on here
+	/**
+	 * Reads from the user file and checks if the password is correct
+	 * Returns false if the user does not exist or the password is incorrect or null
+	 * @param user
+	 * @param password
+	 * @return
+	 * @throws IOException
+	 */
 	public static boolean confirmPassword(String user, String password) throws IOException {
-		String info = readUserInfoFromFile(user);
-		String DBPass = null;
-		if (info != null) {
-			DBPass = info.split(":")[1];
-			return DBPass.equals(password);
-		} else {
-			return writeOnFile(user + ":" + password + ":" + Constants.STARTING_BALANCE, Constants.USER_FILE);
+		String userInfo = readUserInfoFromFile(user);
+		if(userInfo == null){
+			return false;
 		}
-		// return readUserInfoFromFile(user).split(":")[1].equals(password);
+		return (password == null) ? false : userInfo.split(":")[1].equals(password);
 	}
 
+	/**
+	 * Writes on the user file the new user
+	 * @param userInfo
+	 * @return
+	 * @throws IOException
+	 */
 	public static boolean registerUser(String userInfo) throws IOException {
-		return writeOnFile(userInfo, Constants.USER_FILE);
+		return writeOnFile(userInfo, USER_FILE);
 	}
 
-	public static String readWineInfoFromFile(String key) throws IOException {
-		String line = null;
-		BufferedReader br = null;
-		br = new BufferedReader(new FileReader(Constants.WINE_FILE));
-		while ((line = br.readLine()) != null) {
-			String[] userInfo = line.split(":");
-			if (userInfo[0].equals(key)) {
-				br.close();
-				return line;
-			}
+	/**
+	 * Reads from the wine file and checks if the wine exists
+	 * Returns false if the wine does not exist or null
+	 * @param wine
+	 * @return
+	 * @throws IOException
+	 */
+	public static String readWineInfoFromFile(String wine) throws IOException {
+		return findInFile(wine, WINE_FILE);
+	}
+
+	/**
+	 * Reads the whole file and replaces the line (String searchFor), with the line (String updateTo)
+	 * returns true if the line was updated, false otherwise
+	 * @param toUpdate
+	 * @param updated
+	 * @param filename
+	 * @throws IOException
+	 */
+	private static boolean updateLineInFile(String searchFor, String updateTo, String filename) throws IOException{
+		// init
+		BufferedReader buffer = new BufferedReader(new FileReader(filename));
+		FileOutputStream out = new FileOutputStream(filename);
+		String fileInfo = "";
+		String line;
+
+		// read buffer line by line to populate fileInfo
+		while ((line = buffer.readLine()) != null) {
+			fileInfo += line + "\n";
 		}
-		br.close();
-		return null;
+
+		// replace the line in fileInfo and write it to the file
+		fileInfo = fileInfo.replace(searchFor, updateTo);
+		out.write(fileInfo.getBytes());
+
+		buffer.close();
+		out.close();
+		return findInFile(searchFor, filename).equals(searchFor);
 	}
 
+	/**
+	 * Writes on the wine file the updated line
+	 * @param wineInfo
+	 * @return
+	 * @throws IOException
+	 */
 	public static boolean updateLineWines(String toUpdate, String updated) throws IOException {
-
-		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.WINE_FILE)));
-
-		String line;
-		String input = "";
-		// read file line by line and replace
-		while ((line = file.readLine()) != null) {
-			input += line + "\n";
-		}
-		input = input.replace(toUpdate, updated);
-
-		FileOutputStream os = new FileOutputStream(new File(Constants.WINE_FILE));
-		os.write(input.getBytes());
-
-		file.close();
-		os.close();
-		return true;
+		return updateLineInFile(toUpdate, updated, WINE_FILE);
 	}
 
+	/**
+	 * Writes on the user file the new updated user line 
+	 * @param wineInfo
+	 * @return
+	 * @throws IOException
+	 */
 	public static boolean updateLineUsers(String toUpdate, String updated) throws IOException {
-		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.USER_FILE)));
-
-		String line;
-		String input = "";
-		// read file line by line and replace
-		while ((line = file.readLine()) != null) {
-			input += line + "\n";
-		}
-		input = input.replace(toUpdate, updated);
-
-		FileOutputStream os = new FileOutputStream(new File(Constants.USER_FILE));
-		os.write(input.getBytes());
-
-		file.close();
-		os.close();
-		return true;
+		return updateLineInFile(toUpdate, updated, USER_FILE);
 	}
 
+	/**
+	 * Writes on the file (String) filename the (String) line 
+	 * @param wineInfo
+	 * @return
+	 * @throws IOException
+	 */
 	public static boolean writeOnFile(String line, String fileName) throws IOException {
-		BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, true));
-		bw.write(line);
-		bw.flush();
+		BufferedWriter buffer = new BufferedWriter(new FileWriter(fileName, true));
+		buffer.write(line);
+		buffer.flush();
 		// Revoke newLine() method
-		bw.newLine();
-		bw.close();
+		buffer.newLine();
+		buffer.close();
 		return true;
 	}
 
 
 
 	public static String readImageNameFromWineImageFile(String exists) throws IOException {
-		String line = null;
-		BufferedReader br = null;
-		br = new BufferedReader(new FileReader(Constants.WINE_IMAGE_FILE));
-		while ((line = br.readLine()) != null) {
-			if ((line.equals(""))) {
-				br.close();
-				return null;
-			}
-			String[] fileInfo = line.split(":");
-			if (fileInfo[0].equals(exists)) {
-				br.close();
-				return fileInfo[1];
-			}
-		}
-		br.close();
-		return null;
+		return findInFile(exists, WINE_IMAGE_FILE).split(":")[1];
 	}
 
 	public static String readSellInfo(String user, String wine) throws IOException {
-		String line = null;
-		BufferedReader br = null;
-		br = new BufferedReader(new FileReader(Constants.SELLS_FILE));
-		while ((line = br.readLine()) != null) {
-			if ((line.equals(""))) {
-				br.close();
-				return null;
-			}
-			String[] fileInfo = line.split(":");
-			if (fileInfo[0].equals(wine) && fileInfo[1].equals(user)) {
-				br.close();
-				return line;
-			}
-		}
-		br.close();
-		return null;
+		return findInFile(user + ":" + wine, SELLS_FILE);
 	}
 
 	// TODO UPDATE FUNCTION NAME
 	public static boolean updateSellsFile(String toUpdate, String updated) throws IOException {
-		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.SELLS_FILE)));
-
-		String line;
-		String input = "";
-		// read file line by line and replace
-		while ((line = file.readLine()) != null) {
-			input += line + "\n";
-		}
-		input = input.replace(toUpdate, updated);
-
-		FileOutputStream os = new FileOutputStream(new File(Constants.SELLS_FILE));
-		os.write(input.getBytes());
-
-		file.close();
-		os.close();
-		return true;
+		return updateLineInFile(toUpdate, updated, SELLS_FILE);
 	}
 
 	public static boolean updateWineStock(String wine, String user, int newStock) throws IOException {
@@ -232,13 +224,13 @@ public class Data {
 
 	public static void createDBs() {
 		try {
-			Boolean folderCreated = createFolder(Constants.DB_FOLDER);
-			Boolean usersFileCreated = new File(Constants.USER_FILE).createNewFile();
-			Boolean winesFileCreated = new File(Constants.WINE_FILE).createNewFile();
-			Boolean sellsFileCreated = new File(Constants.SELLS_FILE).createNewFile();
-			Boolean wineImageFileCreated = new File(Constants.WINE_IMAGE_FILE)
+			Boolean folderCreated = createFolder(DB_FOLDER);
+			Boolean usersFileCreated = new File(USER_FILE).createNewFile();
+			Boolean winesFileCreated = new File(WINE_FILE).createNewFile();
+			Boolean sellsFileCreated = new File(SELLS_FILE).createNewFile();
+			Boolean wineImageFileCreated = new File(WINE_IMAGE_FILE)
 					.createNewFile();
-			Boolean messagesFileCreated = new File(Constants.MESSAGE_FILE).createNewFile();
+			Boolean messagesFileCreated = new File(MESSAGE_FILE).createNewFile();
 
 			String folderCreatedString = folderCreated ? "Folder created" : "Folder not created";
 			String usersFileCreatedString = usersFileCreated ? "Users file created" : "Users file not created";
@@ -264,29 +256,13 @@ public class Data {
 	}
 
 	public static boolean updateMessagesFile(String toUpdate, String updated) throws IOException {
-		BufferedReader file = new BufferedReader(new FileReader(new File(Constants.MESSAGE_FILE)));
-
-		String line;
-		String input = "";
-		// read file line by line and replace
-		while ((line = file.readLine()) != null) {
-			input += line + "\n";
-		}
-		input = input.replace(toUpdate + "\n", updated);
-
-		FileOutputStream os = new FileOutputStream(new File(Constants.MESSAGE_FILE));
-		os.write(input.getBytes());
-
-		file.close();
-		os.close();
-
-		return true;
+		return updateLineInFile(toUpdate, updated, MESSAGE_FILE);
 	}
 
 	public static Hashtable<String, ArrayList<String>> readMessagesFromFile(String receiver) throws IOException {
 		Hashtable<String, ArrayList<String>> messages = new Hashtable<String, ArrayList<String>>();
 		String line = null;
-		BufferedReader br = new BufferedReader(new FileReader(Constants.MESSAGE_FILE));
+		BufferedReader br = new BufferedReader(new FileReader(MESSAGE_FILE));
 		while ((line = br.readLine()) != null) {
 			String[] fileInfo = line.split(":");
 			if(!fileInfo[0].equals(receiver)){
