@@ -15,6 +15,7 @@ public class Tintolmarket implements Serializable {
 	private ObjectInputStream in = null;
 	private ObjectOutputStream out = null;
 	private boolean close = false;
+	private BufferedImage bfimage = null;
 
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
@@ -100,8 +101,7 @@ public class Tintolmarket implements Serializable {
 				out.writeObject(request);
 
 				if (request.operation == Request.Operation.ADD) {
-					BufferedImage image = WineImage.readImageFromDisk(WineImage.getImagePath(request.image));
-					WineImage.sendImage(image, out, request.image);
+					WineImage.sendImage(bfimage, out, request.image);
 				}
 
 				// Receive response from server
@@ -249,6 +249,13 @@ public class Tintolmarket implements Serializable {
 		}
 		String wine = tokens[1];
 		String image = tokens[2];
+		// Check if image exists
+		try {
+			bfimage = WineImage.readImageFromDisk(WineImage.getImagePath(image));
+		} catch (IOException e) {
+			System.out.println("imagem nao existe");
+			return null;
+		}
 		try {
 			return Request.createAddOperation(wine, image);
 		} catch (IOException e) {
