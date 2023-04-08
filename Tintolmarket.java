@@ -128,10 +128,10 @@ public class Tintolmarket implements Serializable {
 					System.out.println();
 				}
 				response.responseToString();
-			} catch (IOException e) {
+			} /* catch (IOException e) {
 				System.out.println("imagem nao existe");
 				//e.printStackTrace();
-			} catch(Exception e2){
+			} */ catch(Exception e2){
 				close = true;
 			}
 		}

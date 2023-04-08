@@ -5,47 +5,53 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Hashtable;
+import java.util.Random;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Data {
 
-	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws IOException {
+	public static boolean updateImageWineFile(String lineToUpdate, String updatedLine) throws /* IO */Exception {
 		return writeOnFile(updatedLine, Constants.WINE_IMAGE_FILE);
 	}
 
-	public static String readUserInfoFromFile(String key) throws IOException {
+	public static String readUserInfoFromFile(String userName/* , Key secretKey */) throws /* IO */Exception/* , InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException */ {
 		String line = null;
 		BufferedReader br = null;
 		br = new BufferedReader(new FileReader(Constants.USER_FILE));
 		while ((line = br.readLine()) != null) {
-			if ((line.equals(""))) {
+			String decryptedLine = decryptAES128(line);
+			if ((decryptedLine.equals(""))) {
 				br.close();
 				return null;
 			}
-			String[] userInfo = line.split(":");
-			if (userInfo[0].equals(key)) {
+			String[] userInfo = decryptedLine.split(":");
+			if (userInfo[0].equals(userName)) {
 				br.close();
-				return line;
+				return decryptedLine;
 			}
 		}
 		br.close();
 		return null;
 	}
 
-	public static boolean confirmPassword(String user, String password) throws IOException {
+	public static boolean confirmPassword(String user, String password/* , key secretKey */) throws /* IO */Exception {
 		String info = readUserInfoFromFile(user);
-		String DBPass = null;
 		if (info != null) {
-			DBPass = info.split(":")[1];
-			return DBPass.equals(password);
+			String dataBasePassword = info.split(":")[1];
+			return password.equals(dataBasePassword);
 		} else {
-			return writeOnFile(user + ":" + password + ":" + Constants.STARTING_BALANCE, Constants.USER_FILE);
+			return writeOnFile(encryptAES128(user + ":" + password + ":" +/*  Constants.STARTING_BALANCE */Integer.toString(200 + new Random().nextInt(201))), Constants.USER_FILE);
 		}
 	}
 
-	public static boolean registerUser(String userInfo) throws IOException {
+	public static boolean registerUser(String userInfo) throws /* IO */Exception {
 		return writeOnFile(userInfo, Constants.USER_FILE);
 	}
 
@@ -74,6 +80,7 @@ public class Data {
 		while ((line = file.readLine()) != null) {
 			input += line + "\n";
 		}
+
 		input = input.replace(toUpdate, updated);
 
 		FileOutputStream os = new FileOutputStream(new File(Constants.WINE_FILE));
@@ -93,6 +100,7 @@ public class Data {
 		while ((line = file.readLine()) != null) {
 			input += line + "\n";
 		}
+
 		input = input.replace(toUpdate, updated);
 
 		FileOutputStream os = new FileOutputStream(new File(Constants.USER_FILE));
@@ -103,14 +111,47 @@ public class Data {
 		return true;
 	}
 
-	public static boolean writeOnFile(String line, String fileName) throws IOException {
+	public static boolean writeOnFile(String line, String fileName) throws /* IO */Exception {
 		BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, true));
 		bw.write(line);
 		bw.flush();
-		// Revoke newLine() method
 		bw.newLine();
 		bw.close();
 		return true;
+	}
+
+	private static String encryptAES128(String line) throws RuntimeException {
+		try {
+			SecretKeySpec secretKey = new SecretKeySpec("yomamakeydeusman".getBytes(), "AES");
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+			byte[] encryptedBytes = cipher.doFinal(line.getBytes(StandardCharsets.UTF_8));
+			return Base64.getEncoder().encodeToString(encryptedBytes);
+		} catch (Exception e) {
+			throw new RuntimeException("Error while encrypting line", e);
+		}
+	}
+
+	private static String decryptAES128(String encryptedLine) throws RuntimeException {
+		try {
+			SecretKeySpec secretKey = new SecretKeySpec("yomamakeydeusman".getBytes(), "AES");
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			cipher.init(Cipher.DECRYPT_MODE, secretKey);
+			byte[] decodedBytes = Base64.getDecoder().decode(encryptedLine);
+			byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+			return new String(decryptedBytes, StandardCharsets.UTF_8);
+		} catch (Exception e) {
+			throw new RuntimeException("Error while decrypting line", e);
+		}
+	}
+
+	public static void main(String[] args) {
+		String originalLine = "This is a line to be encrypted";
+		String encryptedLine = encryptAES128(originalLine);
+		System.out.println("Encrypted line: " + encryptedLine);
+
+		String decryptedLine = decryptAES128(encryptedLine);
+		System.out.println("Decrypted line: " + decryptedLine);
 	}
 
 	public static String readImageNameFromWineImageFile(String exists) throws IOException {
@@ -170,14 +211,14 @@ public class Data {
 		return true;
 	}
 
-	public static boolean updateWineStock(String wine, String user, int newStock, String seller) throws IOException {
+	public static boolean updateWineStock(String wine, String user, int newStock, String seller) throws /* IO */Exception {
 		String userInfo = Data.readSellInfo(wine, seller);
 		String[] userInfoTokens = userInfo.split(":");
 		userInfoTokens[2] = String.valueOf(newStock);
 		return Data.updateImageSellsFile(userInfo, String.join(":", userInfoTokens));
 	}
 
-	public static boolean updateUserBalance(String userId, int newSellerBalance) throws IOException {
+	public static boolean updateUserBalance(String userId, int newSellerBalance) throws /* IO */Exception {
 		String userInfo = Data.readUserInfoFromFile(userId);
 		String[] userInfoTokens = userInfo.split(":");
 		userInfoTokens[2] = String.valueOf(newSellerBalance);
