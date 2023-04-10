@@ -1,11 +1,9 @@
-import java.io.IOException;
-
 public class User {
 	/*
      * Returns if the user and the password are a match
      * If the user is not registered, register
      */
-    public boolean authenticate(String user, String password) throws IOException{
+    public boolean authenticate(String user, String password) throws /* IO */Exception{
 		if(user == null || password == null){
 			return false;
 		}

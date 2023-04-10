@@ -35,7 +35,7 @@ public class Wine {
 	 * @return
 	 * @throws IOException
 	 */
- 	public static boolean addWine(String wine, String user) throws IOException {
+ 	public static boolean addWine(String wine, String user) throws /* IO */Exception {
 		String wineInfo = Data.readWineInfoFromFile(wine);
 		if (wineInfo != null){
 			return false;
@@ -76,3 +76,8 @@ public class Wine {
 		return sum;
 	}
 }
+/*
+
+keytool -genkeypair -alias keyRSA -keyalg RSA -keysize 2048 -storetype JCEKS -keystore myServerKeys
+ *
+*/
