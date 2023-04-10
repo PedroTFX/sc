@@ -1,22 +1,41 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 public class TintolmarketServer implements Serializable {
-	private static int port = 12345;
+	private static int port = 12345; // Default port
 	private static boolean close = false;
 
 	public static void main(String[] args) {
-		System.out.println("servidor: main");
-		TintolmarketServer server = new TintolmarketServer();
-		// getting port from args else defaults to 1234
-		port = args.length > 0 ? Integer.parseInt(args[0]) : port;
-		server.startServer(port);
+		if (args.length != 3 && args.length != 4) {
+			System.out.println(
+					"Usage: java TintolmarketServer [port] <databasePassword> <keystoreFilename> <keystorePassword>");
+			return;
+		}
+
+		int index = 0;
+		if (args.length == 4) {
+			port = Integer.parseInt(args[index++]);
+		}
+		String password_cifra = args[index++];
+		String keystore = args[index++];
+		String keystorePassword = args[index];
+
+		new TintolmarketServer().startServer(port, password_cifra, keystore, keystorePassword);
 	}
 
 	/**
@@ -24,7 +43,7 @@ public class TintolmarketServer implements Serializable {
 	 *
 	 * @param port
 	 */
-	public void startServer(int port) {
+	public void startServer(int port, String password_cifra, String keystoreFilename, String keystorePassword) {
 		// Initialize
 		ServerSocket sSoc = null;
 		Data.createDBs();
@@ -35,12 +54,16 @@ public class TintolmarketServer implements Serializable {
 			System.exit(-1);
 		}
 
+		// Initialize secure socket
+		SSLServerSocket sslListener = getSecureSocket(keystoreFilename, keystorePassword);
+
 		// Launch threads for new client requests
 		while (!close) {
 			try {
-				Socket inSoc = sSoc.accept();
+				// Listen for client connections
+				Socket inSoc = sslListener.accept();
 				new ServerThread(inSoc);
-			} catch (IOException e) {
+			} catch (/* IO */Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -51,6 +74,42 @@ public class TintolmarketServer implements Serializable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private SSLServerSocket getSecureSocket(String keystoreFilename, String keystorePassword) {
+		SSLServerSocket sslListener = null;
+		try {
+			// Load keystore
+			KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			InputStream kstore = TintolmarketServer.class.getResourceAsStream("/" + keystoreFilename);
+			keyStore.load(kstore, keystorePassword.toCharArray());
+
+			// Initialize trust manager
+			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			tmf.init(keyStore);
+
+			// Initialize key manager
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			kmf.init(keyStore, keystorePassword.toCharArray());
+
+			// Create SSL Context
+			SSLContext ctx = SSLContext.getInstance("TLS");
+			ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), SecureRandom.getInstanceStrong());
+
+			// Create SSL Socket Factory
+			SSLServerSocketFactory factory = ctx.getServerSocketFactory();
+
+			// Create SSL socket
+			ServerSocket listener = factory.createServerSocket(port);
+			sslListener = (SSLServerSocket) listener;
+
+			// Require TLSv1.3 authentication
+			sslListener.setNeedClientAuth(true);
+			sslListener.setEnabledProtocols(new String[] { "TLSv1.3" });
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return sslListener;
 	}
 
 	// Threads utilizadas para comunicacao com os clientes
@@ -201,7 +260,7 @@ public class TintolmarketServer implements Serializable {
 					response.seller = wineInfoTokens[1];
 					response.wine = request.wine;
 					response.image = wineImageNameToSend;
-					if (wineInfoTokens.length > 3){
+					if (wineInfoTokens.length > 3) {
 						response.averageWineClassification = Double.parseDouble(wineInfoTokens[3]);
 					}
 				}
@@ -215,7 +274,7 @@ public class TintolmarketServer implements Serializable {
 					response.balance = -1;
 				}
 			} else if (request.operation == Request.Operation.CLASSIFY) {
-				if (request.stars < 1 || request.stars > 5){
+				if (request.stars < 1 || request.stars > 5) {
 					response.type = Response.Type.ERROR;
 					response.message = "classificacao invalida. tem de ser entre 1 e 5";
 				}

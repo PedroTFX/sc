@@ -1,17 +1,29 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+
 public class Tintolmarket implements Serializable {
 	private static Scanner sc = new Scanner(System.in);
-	private Socket clientSocket = null;
+	private SSLSocket clientSocket = null;
+	private SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+	SSLSocket sslsocket = null;
 	private ObjectInputStream in = null;
 	private ObjectOutputStream out = null;
 	private boolean close = false;
@@ -19,22 +31,27 @@ public class Tintolmarket implements Serializable {
 
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
-		if (args.length < 2) {
-			System.out.println("Utilizacao: java TintolMarket <server-address>[:port] <userId> [password]");
+		if (args.length != 5) {
+			System.out.println("Utilizacao: java Tintolmarket <serverAddress[:port>] <truststore> <keystore> <password-keystore> <userID>");
 			return;
 		}
 
 		// Obter endereço e porta do servidor
 		String[] serverAddressPort = args[0].split(":");
 		String serverAddress = serverAddressPort[0];
+
 		int serverPort = serverAddressPort.length > 1 ? Integer.parseInt(serverAddressPort[1]) : 12345;
 
+		String trustStore = args[1];
+		String keyStore = args[2];
+		String password_keyStore = args[3];
+
 		// Obter userID and password
-		String userId = args[1];
-		String password = args.length > 2 ? args[2] : getPassword();
+		String userId = args[4];
+		//String password = args.length > 2 ? args[2] : getPassword();
 
 		// Lançar
-		new Tintolmarket(serverAddress, serverPort, userId, password);
+		new Tintolmarket(serverAddress, serverPort, userId, trustStore, keyStore, password_keyStore/* , password */);
 	}
 
 	private static String getPassword() {
@@ -42,10 +59,10 @@ public class Tintolmarket implements Serializable {
 		return sc.nextLine();
 	}
 
-	private Tintolmarket(String host, int port, String userId, String password) {
-		initializeServerConnection(host, port);
+	private Tintolmarket(String host, int port, String userId, String trustStore, String keyStore, String password_keyStore/* , String password */) {
+		initializeServerConnection(host, port, trustStore, keyStore, password_keyStore);
 
-		authenticateUser(userId, password);
+		//authenticateUser(userId, password);
 
 		run();
 
@@ -54,9 +71,41 @@ public class Tintolmarket implements Serializable {
 		close();
 	}
 
-	private void initializeServerConnection(String host, int port) {
+	private void initializeServerConnection(String host, int port, String trustStoreFilename, String keyStoreFilename, String keyStorePassword) {
+		try{
+
+			KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			InputStream tstore = Tintolmarket.class
+			.getResourceAsStream("/" + trustStoreFilename);
+			trustStore.load(tstore, "sharedkeyspass".toCharArray());
+			tstore.close();
+			TrustManagerFactory tmf = TrustManagerFactory
+			.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			tmf.init(trustStore);
+
+			KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			InputStream kstore = Tintolmarket.class
+			.getResourceAsStream("/" + keyStoreFilename);
+			keyStore.load(kstore, keyStorePassword.toCharArray());
+			KeyManagerFactory kmf = KeyManagerFactory
+			.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			kmf.init(keyStore, keyStorePassword.toCharArray());
+			SSLContext ctx = SSLContext.getInstance("TLS");
+			ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(),
+			SecureRandom.getInstanceStrong());
+
+			SocketFactory factory = ctx.getSocketFactory();
+			Socket connection = factory.createSocket(host, port);
+			((SSLSocket) connection).setEnabledProtocols(new String[] {"TLSv1.3"});
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+
+
+
 		try {
-			clientSocket = new Socket(host, port);
+			clientSocket = (SSLSocket) sslsocketfactory.createSocket(host, port);
+			//clientSocket = new SSLSocket(/* host, port */);
 			out = new ObjectOutputStream(clientSocket.getOutputStream());
 			in = new ObjectInputStream(clientSocket.getInputStream());
 		} catch (IOException e) {
