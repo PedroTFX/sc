@@ -10,7 +10,7 @@ public class Logic {
      * Inicialmente o vinho não terá qualquer classificação e o número de unidades disponíveis
      * será zero.
      */
-    public static boolean addWine(String wine, String user) throws IOException{
+    public static boolean addWine(String wine, String user) throws /* IO */Exception{
         return Wine.addWine(wine, user);
     }
 
@@ -19,7 +19,7 @@ public class Logic {
      * unidades do vinho wine pelo valor value. Caso o wine não exista, deve ser devolvido um
      * erro.
      */
-    public static boolean sellWine(String userId, String wine, int quantity, int value) throws IOException {
+    public static boolean sellWine(String userId, String wine, int quantity, int value) throws /* IO */Exception {
         //checkif wine exists
         if(!Wine.wineExists(wine) || quantity < 0){
             return false;
@@ -45,7 +45,7 @@ public class Logic {
      * @return
      * @throws IOException
      */
-    public static String wallet(String user) throws IOException{
+    public static String wallet(String user) throws /* IO */Exception{
 		String info = Data.readUserInfoFromFile(user);
 		if (info == null){
 			return null;
@@ -72,7 +72,7 @@ public class Logic {
         return Wine.classify(wine, classification);
     }
 
-	public static boolean sendMessage(String sender, String recipient, String message) throws IOException {
+	public static boolean sendMessage(String sender, String recipient, String message) throws /* IO */Exception {
 		String userInfo = Data.readUserInfoFromFile(recipient);
 		if (userInfo != null) {
 			return Data.writeOnFile(recipient + ":" + sender + ":" + Data.escape(message), Constants.MESSAGE_FILE);
@@ -84,7 +84,7 @@ public class Logic {
 		return Data.readMessagesFromFile(userId);
 	}
 
-	public static boolean buy(String buyer, String wine, String seller, int quantity) throws IOException{
+	public static boolean buy(String buyer, String wine, String seller, int quantity) throws /* IO */Exception{
 		//String wine = request.wine;
 
 		// Se este vinho não estiver à venda

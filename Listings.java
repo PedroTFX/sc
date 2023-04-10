@@ -10,7 +10,7 @@ public class Listings {
      * @return
      * @throws IOException
      */
-    public static boolean addListing(String userId, String wine, int quantity, int value) throws IOException {
+    public static boolean addListing(String userId, String wine, int quantity, int value) throws /* IO */Exception {
 		String sell = Data.readSellInfo(wine,userId);
 		if (sell != null) {
 			String[] sellTokens = sell.split(":");
