@@ -1,20 +1,13 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.SSLSocket;
 
 public class TintolmarketServer implements Serializable {
 	private static int port = 12345; // Default port
@@ -44,24 +37,19 @@ public class TintolmarketServer implements Serializable {
 	 * @param port
 	 */
 	public void startServer(int port, String password_cifra, String keystoreFilename, String keystorePassword) {
-		// Initialize
-		ServerSocket sSoc = null;
-		Data.createDBs();
-		try {
-			sSoc = new ServerSocket(port);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
-		}
+		// Initialize secure server socket
+		SSLServerSocket sslServerSocket = getSecureSocket(keystoreFilename, keystorePassword);
 
-		// Initialize secure socket
-		SSLServerSocket sslListener = getSecureSocket(keystoreFilename, keystorePassword);
+		// Initialize database
+		Data.createDBs();
 
 		// Launch threads for new client requests
 		while (!close) {
 			try {
 				// Listen for client connections
-				Socket inSoc = sslListener.accept();
+				SSLSocket inSoc = (SSLSocket) sslServerSocket.accept();
+				// System.out.println("Client connected: " +
+				// sslListener.getInetAddress().getHostName());
 				new ServerThread(inSoc);
 			} catch (/* IO */Exception e) {
 				e.printStackTrace();
@@ -70,46 +58,38 @@ public class TintolmarketServer implements Serializable {
 
 		// Close
 		try {
-			sSoc.close();
+			sslServerSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	private SSLServerSocket getSecureSocket(String keystoreFilename, String keystorePassword) {
-		SSLServerSocket sslListener = null;
+		SSLServerSocket sslServerSocket = null;
 		try {
-			// Load keystore
-			KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			InputStream kstore = TintolmarketServer.class.getResourceAsStream("/" + keystoreFilename);
-			keyStore.load(kstore, keystorePassword.toCharArray());
+			//System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
+			System.setProperty("javax.net.ssl.keyStore", keystoreFilename);
+			System.setProperty("javax.net.ssl.keyStorePassword", keystorePassword);
+			//System.setProperty("javax.net.debug", "ssl");
 
-			// Initialize trust manager
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-			tmf.init(keyStore);
+			try {
+				TintolmarketServer.class.getResource(keystoreFilename).getFile();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
-			// Initialize key manager
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			kmf.init(keyStore, keystorePassword.toCharArray());
+			String trustStore = System.getProperty("javax.net.ssl.keyStore");
+			String storeLoc = System.getProperty("java.class.path");
+			System.out.println("classpath: " + storeLoc);
+			System.out.println("Key store location: " + trustStore);
 
-			// Create SSL Context
-			SSLContext ctx = SSLContext.getInstance("TLS");
-			ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), SecureRandom.getInstanceStrong());
-
-			// Create SSL Socket Factory
-			SSLServerSocketFactory factory = ctx.getServerSocketFactory();
-
-			// Create SSL socket
-			ServerSocket listener = factory.createServerSocket(port);
-			sslListener = (SSLServerSocket) listener;
-
-			// Require TLSv1.3 authentication
-			sslListener.setNeedClientAuth(true);
-			sslListener.setEnabledProtocols(new String[] { "TLSv1.3" });
+			SSLServerSocketFactory sslServerSocketFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+			sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(port);
+			System.out.println("Server started on port " + port + "...");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return sslListener;
+		return sslServerSocket;
 	}
 
 	// Threads utilizadas para comunicacao com os clientes
@@ -117,7 +97,7 @@ public class TintolmarketServer implements Serializable {
 		private Socket socket = null;
 		ObjectOutputStream outStream;
 		ObjectInputStream inStream;
-		String userId = null;
+		String userId = "joao"; //TODO TU TROCAME ISTO APH
 		boolean close = false;
 
 		ServerThread(Socket inSoc) {
@@ -131,7 +111,7 @@ public class TintolmarketServer implements Serializable {
 			System.out.println("Thread inicializada");
 
 			// Authentication
-			authenticate();
+			//authenticate();
 			System.out.printf("Utilizador %s autenticado\n", userId);
 
 			// Listen to requests
@@ -200,6 +180,7 @@ public class TintolmarketServer implements Serializable {
 						WineImage.sendImage(image, outStream, wineImageName);
 					}
 				} catch (Exception e1) {
+					System.out.println("Houve uma excepção no cliente, vamos fechar a ligação...");
 					close = true;
 				}
 			}
@@ -374,6 +355,7 @@ public class TintolmarketServer implements Serializable {
 			try {
 				System.out.println("closing thread for " + userId);
 				socket.close();
+				// sslSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -1,23 +1,14 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.Socket;
-import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 
 public class Tintolmarket implements Serializable {
 	private static Scanner sc = new Scanner(System.in);
@@ -32,7 +23,8 @@ public class Tintolmarket implements Serializable {
 	public static void main(String[] args) {
 		// Verificar se temos pelo menos 2 argumentos
 		if (args.length != 5) {
-			System.out.println("Utilizacao: java Tintolmarket <serverAddress[:port>] <truststore> <keystore> <password-keystore> <userID>");
+			System.out.println(
+					"Utilizacao: java Tintolmarket <serverAddress[:port>] <truststore> <keystore> <password-keystore> <userID>");
 			return;
 		}
 
@@ -48,7 +40,7 @@ public class Tintolmarket implements Serializable {
 
 		// Obter userID and password
 		String userId = args[4];
-		//String password = args.length > 2 ? args[2] : getPassword();
+		// String password = args.length > 2 ? args[2] : getPassword();
 
 		// Lançar
 		new Tintolmarket(serverAddress, serverPort, userId, trustStore, keyStore, password_keyStore/* , password */);
@@ -59,10 +51,11 @@ public class Tintolmarket implements Serializable {
 		return sc.nextLine();
 	}
 
-	private Tintolmarket(String host, int port, String userId, String trustStore, String keyStore, String password_keyStore/* , String password */) {
-		initializeServerConnection(host, port, trustStore, keyStore, password_keyStore);
+	private Tintolmarket(String host, int port, String userId, String trustStore, String keyStore,
+			String password_keyStore/* , String password */) {
+		initializeServerConnection(host, port, trustStore);
 
-		//authenticateUser(userId, password);
+		// authenticateUser(userId, password);
 
 		run();
 
@@ -71,44 +64,36 @@ public class Tintolmarket implements Serializable {
 		close();
 	}
 
-	private void initializeServerConnection(String host, int port, String trustStoreFilename, String keyStoreFilename, String keyStorePassword) {
-		try{
-
-			KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			InputStream tstore = Tintolmarket.class
-			.getResourceAsStream("/" + trustStoreFilename);
-			trustStore.load(tstore, "sharedkeyspass".toCharArray());
-			tstore.close();
-			TrustManagerFactory tmf = TrustManagerFactory
-			.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-			tmf.init(trustStore);
-
-			KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			InputStream kstore = Tintolmarket.class
-			.getResourceAsStream("/" + keyStoreFilename);
-			keyStore.load(kstore, keyStorePassword.toCharArray());
-			KeyManagerFactory kmf = KeyManagerFactory
-			.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			kmf.init(keyStore, keyStorePassword.toCharArray());
-			SSLContext ctx = SSLContext.getInstance("TLS");
-			ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(),
-			SecureRandom.getInstanceStrong());
-
-			SocketFactory factory = ctx.getSocketFactory();
-			Socket connection = factory.createSocket(host, port);
-			((SSLSocket) connection).setEnabledProtocols(new String[] {"TLSv1.3"});
-		} catch(Exception e){
-			e.printStackTrace();
-		}
-
-
-
+	private void initializeServerConnection(String host, int port, String trustStoreFilename) {
 		try {
-			clientSocket = (SSLSocket) sslsocketfactory.createSocket(host, port);
-			//clientSocket = new SSLSocket(/* host, port */);
+			// System.setProperty("javax.net.ssl.trustStoreType", "JCEKS");
+			String trustStorePassword = "password";
+			System.out.println("TrustStore: " + trustStoreFilename);
+			System.out.println("TrustStorePassword: " + trustStorePassword);
+			System.setProperty("javax.net.ssl.trustStore", trustStoreFilename);
+			System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+			//System.setProperty("javax.net.debug", "all");
+
+			try {
+				Tintolmarket.class.getResource(trustStoreFilename).getFile();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			String trustStore = System.getProperty("javax.net.ssl.trustStore");
+			String storeLoc = System.getProperty("java.class.path");
+			System.out.println("classpath: " + storeLoc);
+			System.out.println("Trust store location: " + trustStore);
+
+
+			SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+			clientSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
+			clientSocket.startHandshake();
+			System.out.println("Connected to server: " + host + ":" + port);
+
 			out = new ObjectOutputStream(clientSocket.getOutputStream());
 			in = new ObjectInputStream(clientSocket.getInputStream());
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -156,14 +141,14 @@ public class Tintolmarket implements Serializable {
 				// Receive response from server
 				Response response = (Response) in.readObject();
 
-				if(response.type == Response.Type.VIEW){
+				if (response.type == Response.Type.VIEW) {
 					BufferedImage image = WineImage.readImageFromNetwork(in);
 					File folder = WineImage.createFolder("client-images");
 					System.out.println("before");
 					WineImage.writeImageToFile(folder, image, WineImage.getImageExtension(response.image));
 					System.out.println("after");
 				}
-				if(response.type == Response.Type.READ){
+				if (response.type == Response.Type.READ) {
 					System.out.println("MENSAGENS:");
 					Set<String> senders = response.messages.keySet();
 					for (String sender : senders) {
@@ -177,10 +162,12 @@ public class Tintolmarket implements Serializable {
 					System.out.println();
 				}
 				response.responseToString();
-			} /* catch (IOException e) {
-				System.out.println("imagem nao existe");
-				//e.printStackTrace();
-			} */ catch(Exception e2){
+			} /*
+				 * catch (IOException e) {
+				 * System.out.println("imagem nao existe");
+				 * //e.printStackTrace();
+				 * }
+				 */ catch (Exception e2) {
 				close = true;
 			}
 		}
@@ -232,7 +219,7 @@ public class Tintolmarket implements Serializable {
 		}
 		String user = tokens[1];
 		String message = "";
-		for(int i = 2; i < tokens.length; i++){
+		for (int i = 2; i < tokens.length; i++) {
 			message += " " + tokens[i];
 		}
 		return Request.createTalkOperation(user, message.trim());
