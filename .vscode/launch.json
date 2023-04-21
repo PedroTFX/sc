@@ -5,18 +5,25 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Client",
+			"name": "joao",
 			"type": "java",
 			"request": "launch",
 			"mainClass": "Tintolmarket",
-			"args": "127.0.0.1:12345 \"C:/Users/joaob/OneDrive/Ambiente de Trabalho/3 Ano 2 Semestre/SeC_seguranca_e_confiabilidade/sc/novos2/trustStore.jks\" ./novos2/joao_ks.jks password joao"
+			"args": "127.0.0.1:12345 \"C:/Users/joaob/OneDrive/Ambiente de Trabalho/3 Ano 2 Semestre/SeC_seguranca_e_confiabilidade/sc/certificados/trustStore.jks\" ./certificados/joao.jks password joao"
 		},
 		{
-			"name": "Server",
+			"name": "cris",
+			"type": "java",
+			"request": "launch",
+			"mainClass": "Tintolmarket",
+			"args": "127.0.0.1:12345 \"C:/Users/joaob/OneDrive/Ambiente de Trabalho/3 Ano 2 Semestre/SeC_seguranca_e_confiabilidade/sc/certificados/trustStore.jks\" ./certificados/cris.jks password cris"
+		},
+		{
+			"name": "server",
 			"type": "java",
 			"request": "launch",
 			"mainClass": "TintolmarketServer",
-			"args": "12345 yamamapassdeusman ./novos2/server_ks.jks password"
+			"args": "12345 yamamakeydeusman ./certificados/server_ks.jks password"
 		}
 	]
 }
