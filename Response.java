@@ -4,57 +4,54 @@ import java.util.Hashtable;
 
 public class Response implements Serializable {
 	enum Type {
-		OK, ERROR, VIEW, READ
+		AUTHNONCE, OK, ERROR, VIEWWINE, READ
 	}
 
 	Type type;
-	String wine;
-	String message;
-	String image;
-	double averageWineClassification;
-	String seller;
-	int price;
-	int quantity;
-	int balance;
-	Hashtable<String, ArrayList<String>> messages;
+	Object payload;
 
-	public void responseToString() {
-		System.out.println("RESPONSE:");
-		System.out.println("Type: " + type.toString());
-		if(this.wine != null){
-			System.out.println("Wine: " + wine);
-		}
-		if (this.message != null) {
-			System.out.println("Error message: " + message);
-		}
-		if (this.image != null) {
-			System.out.println("Image name: " + image);
-		}
-		if (this.averageWineClassification > -1) {
-			System.out.println("avgClassification: " + averageWineClassification);
-		}
-		if (this.seller != null) {
-			System.out.println("Seller: " + seller);
-		}
-		if (this.quantity > -1) {
-			System.out.println("Quantity: " + quantity);
-		}
-		if (this.balance > -1) {
-			System.out.println("Balance: " + balance);
+	static class AuthNonce implements Serializable{
+		long nonce;
+		boolean newUser;
+
+		AuthNonce(long nonce, boolean newUser) {
+			this.nonce = nonce;
+			this.newUser = newUser;
 		}
 	}
 
-	private Response(Type operation) {
-		this.type = operation;
+	static class OK implements Serializable{
+		String message;
+
+		OK(String message) {
+			this.message = message;
+		}
 	}
 
-	public Response() {
+	static class Error implements Serializable {
+		String message;
 
+		Error(String message) {
+			this.message = message;
+		}
 	}
 
-	static public Response createAuthenticateResponse(String message, boolean ok) {
-		Response response = new Response(ok ? Type.OK : Type.ERROR);
-		response.message = message;
-		return response;
+	static class ViewWineAndListings extends ViewWine {
+		ViewWineAndListings(Wine wine, ArrayList<Listing> listings) {
+			super(wine, listings);
+		}
 	}
-}// class
+
+	Response(Type type, Object payload){
+		this.type = type;
+		this.payload = payload;
+	}
+
+	static class ReadMessages implements Serializable {
+		Hashtable<String, ArrayList<String>> messages;
+
+		ReadMessages(Hashtable<String, ArrayList<String>> messages) {
+			this.messages = messages;
+		}
+	}
+}

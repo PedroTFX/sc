@@ -1,103 +1,122 @@
-import java.io.IOException;
 import java.io.Serializable;
+import java.security.PublicKey;
 
 public class Request implements Serializable {
-	public enum Operation {
-		AUTHENTICATE,
-		ADD,
-		SELL,
-		VIEW,
-		BUY,
+	public enum Type {
+		AUTHUSERID,
+		AUTHREGISTER,
+		AUTHLOGIN,
+		ADDWINE,
+		LISTWINE,
+		VIEWWINE,
+		BUYWINE,
 		WALLET,
 		CLASSIFY,
 		TALK,
 		READ,
-		QUIT
+		TRANSACTIONS,
+		QUIT,
 	}
 
-	Operation operation;
-	String image;
-	String wine;
-	int value;
-	int quantity;
-	String seller;
-	int stars;
+	Type type;
+	Object payload;
 
-	String user;
-	String password;
-	String message;
-
-	public void requestToString() {
-		System.out.println("REQUEST");
-		System.out.println("Operation: " + operation.toString());
-		System.out.println("Image: " + image);
-		System.out.println("Wine: " + wine);
-		System.out.println("Value: " + value);
-		System.out.println("Quantity: " + quantity);
-		System.out.println("seller: " + seller);
-		System.out.println("stars: " + stars);
+	Request(Type type, Object payload) {
+		this.type = type;
+		this.payload = payload;
 	}
 
-	private Request(Operation operation) {
-		this.operation = operation;
+	public static class AuthUserID implements Serializable {
+		String userID;
+
+		AuthUserID(String userID) {
+			this.userID = userID;
+		}
 	}
 
-	static public Request createAuthenticateOperation(String user, String password) {
-		Request authenticate = new Request(Operation.AUTHENTICATE);
-		authenticate.user = user;
-		authenticate.password = password;
-		return authenticate;
+	static class AuthLogin implements Serializable {
+		long nonce;
+		byte[] signedNonce;
+
+		AuthLogin(long nonce, byte[] signedNonce) {
+			this.nonce = nonce;
+			this.signedNonce = signedNonce;
+		}
 	}
 
-	static public Request createAddOperation(String wine, String image) throws IOException {
-		Request add = new Request(Operation.ADD);
-		add.wine = wine;
-		add.image = image;
-		return add;
+	static class AuthRegister extends AuthLogin {
+		PublicKey key;
+
+		AuthRegister(long nonce, byte[] signedNonce, PublicKey key) {
+			super(nonce, signedNonce);
+			this.key = key;
+		}
 	}
 
-	static public Request createSellOperation(String wine, int value, int quantity) {
-		Request sell = new Request(Operation.SELL);
-		sell.wine = wine;
-		sell.value = value;
-		sell.quantity = quantity;
-		return sell;
+	static class AddWine implements Serializable {
+		Wine wine;
+
+		AddWine(Wine wine) {
+			this.wine = wine;
+		}
 	}
 
-	static public Request createViewOperation(String wine) {
-		Request view = new Request(Operation.VIEW);
-		view.wine = wine;
-		return view;
+	static class ListWine implements Serializable {
+		String name;
+		int price;
+		int quantity;
+
+		ListWine(String name, int price, int quantity) {
+			this.name = name;
+			this.price = price;
+			this.quantity = quantity;
+		}
 	}
 
-	static public Request createBuyOperation(String wine, String seller, int quantity) {
-		Request buy = new Request(Operation.BUY);
-		buy.wine = wine;
-		buy.seller = seller;
-		buy.quantity = quantity;
-		return buy;
+	static class ViewWine implements Serializable {
+		String name;
+
+		ViewWine(String name) {
+			this.name = name;
+		}
 	}
 
-	static public Request createWalletOperation() {
-		Request wallet = new Request(Operation.WALLET);
-		return wallet;
+	static class BuyWine implements Serializable {
+		String name;
+		String seller;
+		int quantity;
+
+		BuyWine(String name, String seller, int quantity) {
+			this.name = name;
+			this.seller = seller;
+			this.quantity = quantity;
+		}
 	}
 
-	static public Request createClassifyOperation(String wine, int stars) {
-		Request classify = new Request(Operation.CLASSIFY);
-		classify.wine = wine;
-		classify.stars = stars;
-		return classify;
+	static class ClassifyWine implements Serializable{
+		String name;
+		int stars;
+
+		ClassifyWine(String name, int stars) {
+			this.name = name;
+			this.stars = stars;
+		}
 	}
 
-	static public Request createTalkOperation(String user, String message) {
-		Request talk = new Request(Operation.TALK);
-		talk.user = user;
-		talk.message = message;
-		return talk;
+	static class Talk implements Serializable{
+		String user;
+		String message;
+
+		Talk(String user, String message) {
+			this.user = user;
+			this.message = message;
+		}
 	}
 
-	static public Request createReadOperation() {
-		return new Request(Operation.READ);
+	static class Wallet implements Serializable{
+		String user;
+		Wallet(String user) {
+
+		}
 	}
 }
