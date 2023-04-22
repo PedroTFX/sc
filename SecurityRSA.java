@@ -129,6 +129,6 @@ public class SecurityRSA {
 		Cipher cipher = Cipher.getInstance("RSA");
 		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 		byte[] encryptedMessageBytes = cipher.doFinal(encryptedMessage.getBytes(StandardCharsets.UTF_8));
-		return new String(encryptedMessageBytes, StandardCharsets.UTF_8);
+		return Base64.getEncoder().encodeToString(encryptedMessageBytes);
 	}
 }
