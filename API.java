@@ -202,4 +202,19 @@ public class API {
 	static String unescape(String message) {
 		return message.replace("\\:", ":");
 	}
+
+	public Response talk(String recipient, String message, String sender) throws Exception {
+
+		String recipientInfo = db.user.get(recipient);
+
+		if (recipientInfo == null) {
+			return new Response(Response.Type.ERROR, new Response.Error("Recetor nao existe"));
+		}
+
+		String newRow = String.format("%s:%s:%s", recipient, sender, message);
+
+		db.message.add(newRow);
+
+		return new Response(Response.Type.OK, new Response.OK("Mensagem enviada com sucesso"));
+	}
 }

@@ -305,38 +305,18 @@ public class TintolmarketServer implements Serializable {
 				  }
 				  return response;
 			} else if (type == Request.Type.CLASSIFY) {
-				  Response response = null;
-				  Request.ClassifyWine classifyWine = (Request.ClassifyWine) request.payload;
-				  if (classifyWine.stars < 1 || classifyWine.stars > 5) {
-					response = new Response(Response.Type.ERROR, new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
-					//TODO VER SE ESTA LINHA RESOLVE O WARNING
-					//return response;
+				Request.ClassifyWine classifyWine = (Request.ClassifyWine) request.payload;
+
+				if (classifyWine.stars < 1 || classifyWine.stars > 5) {
+					return new Response(Response.Type.ERROR, new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
 				}
 
-				  return api.classifyWine(classifyWine.name, classifyWine.stars);
+				return api.classifyWine(classifyWine.name, classifyWine.stars);
+
+			} else if (type == Request.Type.TALK) {
+				Request.Talk talk = (Request.Talk) request.payload;
+				return api.talk(talk.user, talk.message, threadUserID);
 			}
-				 /*
-				 if (wine == null) {
-					response = new Response(Response.Type.ERROR, new
-					Response.Error("Esse vinho nao existe"));
-				  }
-
-				  api.classifyWine(classifyWine.name, classifyWine.stars);
-
-				  response = new Response(Response.Type.OK, new
-				  Response.OK("vinho classificado com sucesso"));
-				  return response; */
-				 /* } else if (type == Request.Type.TALK) {
-
-				  boolean messageSent = Logic.sendMessage(userId, request.user,
-				  request.message);
-
-				  if (messageSent) {
-				  response.type = Response.Type.OK;
-				  } else {
-				  response.type = Response.Type.ERROR;
-				  response.message = "Recetor não existe";
-				  }
 
 				  /*} else if (type == Request.Type.READ) {
 				 * response.messages = Logic.getMessages(userId);

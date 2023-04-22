@@ -3,11 +3,17 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -21,6 +27,7 @@ public class Tintolmarket implements Serializable {
 	private ObjectInputStream in = null;
 	private ObjectOutputStream out = null;
 	private boolean close = false;
+	private String trustStore = null;
 	//private BufferedImage bfimage = null;
 
 	public static void main(String[] args) throws Exception {
@@ -47,6 +54,9 @@ public class Tintolmarket implements Serializable {
 	}
 
 	private Tintolmarket(String host, int port, String trustStore, String keyStore, String keyStorePassword, String userId) throws Exception {
+
+		this.trustStore = trustStore;
+
 		privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 
 		initializeServerConnection(host, port, trustStore);
@@ -244,13 +254,35 @@ public class Tintolmarket implements Serializable {
 			return new Request(Request.Type.CLASSIFY, new Request.ClassifyWine(tokens[1], Integer.parseInt(tokens[2])));
 
 		} else if (operation.equals("talk") || operation.equals("t")) {
-			if (tokens.length != 3) {
+			if (tokens.length < 3) {
 				System.out.println("Usage: talk <user> <message>");
 				return null;
 			}
+			PublicKey publicKey = null;
+			try {
+				publicKey = SecurityRSA.getPublicKey(trustStore, "password", tokens[1]);
+			} catch (Exception e) {
+				//e.printStackTrace();
+				System.out.println("Nao foi possivel obter a chave publica");
+			}
+			//System.out.println(publicKey);
+			StringBuilder messageBuilder = new StringBuilder();
+			for (int i = 2; i < tokens.length; i++) {
+				messageBuilder.append(tokens[i] + " ");
+			}
 
-			return new Request(Request.Type.TALK, new Request.Talk(tokens[0], tokens[1]));
+			String completeMessage = messageBuilder.toString().trim();
+
+			String encryptedMessage = null;
+			try {
+				encryptedMessage = SecurityRSA.encryptMessage(publicKey, completeMessage);
+			} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+				System.out.println("Erro a cifrar mensagem");
+				// e.printStackTrace();
+			}
+			return new Request(Request.Type.TALK, new Request.Talk(tokens[1], encryptedMessage));
 		} else if (operation.equals("read") || operation.equals("r")) {
+
 			return new Request(Request.Type.READ, null);
 		} else if(operation.equals("list") || operation.equals("l")){
 			return new Request(Request.Type.LISTWINE, null);
@@ -258,122 +290,6 @@ public class Tintolmarket implements Serializable {
 
 		return null;
 	}
-	/*
-	 * private Request createReadRequest(String[] tokens) {
-	 * if (tokens.length != 1) {
-	 * System.out.println("Utilização: read");
-	 * return null;
-	 * }
-	 * return Request.createReadOperation();
-	 * }
-	 *
-	 * private Request createTalkRequest(String[] tokens) {
-	 * if (tokens.length < 3) {
-	 * System.out.println("Utilização: talk <user> <message>");
-	 * return null;
-	 * }
-	 * String user = tokens[1];
-	 * String message = "";
-	 * for (int i = 2; i < tokens.length; i++) {
-	 * message += " " + tokens[i];
-	 * }
-	 * return Request.createTalkOperation(user, message.trim());
-	 * }
-	 *
-	 * private Request createClassifyRequest(String[] tokens) {
-	 * if (tokens.length != 3) {
-	 * System.out.println("Utilização: classify <wine> <stars>");
-	 * return null;
-	 * }
-	 * String wine = tokens[1];
-	 * int stars;
-	 * try {
-	 * stars = Integer.parseInt(tokens[2]);
-	 * } catch (Exception e) {
-	 * System.out.println("Stars têm que ser inteiros");
-	 * return null;
-	 * }
-	 *
-	 * return Request.createClassifyOperation(wine, stars);
-	 * }
-	 *
-	 * private Request createWalletRequest(String[] tokens) {
-	 * if (tokens.length != 1) {
-	 * System.out.println("Utilização: wallet");
-	 * return null;
-	 * }
-	 *
-	 * return Request.createWalletOperation();
-	 * }
-	 *
-	 * private Request createBuyRequest(String[] tokens) {
-	 * if (tokens.length != 4) {
-	 * System.out.println("Utilização: buy <wine> <seller> <quantity>");
-	 * return null;
-	 * }
-	 * String wine = tokens[1];
-	 * String seller = tokens[2];
-	 * int quantity;
-	 * try {
-	 * quantity = Integer.parseInt(tokens[3]);
-	 * } catch (Exception e) {
-	 * System.out.println("Quantity têm que ser inteiros");
-	 * return null;
-	 * }
-	 *
-	 * return Request.createBuyOperation(wine, seller, quantity);
-	 * }
-	 *
-	 * private Request createViewRequest(String[] tokens) {
-	 * if (tokens.length != 2) {
-	 * System.out.println("Utilização: view <wine>");
-	 * return null;
-	 * }
-	 * String wine = tokens[1];
-	 * return Request.createViewOperation(wine);
-	 * }
-	 *
-	 * private Request createAddRequest(String[] tokens) {
-	 * if (tokens.length != 3) {
-	 * System.out.println("Utilização: add <wine> <image>");
-	 * return null;
-	 * }
-	 * String wine = tokens[1];
-	 * String image = tokens[2];
-	 * // Check if image exists
-	 * try {
-	 * bfimage = WineImage.readImageFromDisk(WineImage.getImagePath(image));
-	 * } catch (IOException e) {
-	 * System.out.println("imagem nao existe");
-	 * return null;
-	 * }
-	 * try {
-	 * return Request.createAddOperation(wine, image);
-	 * } catch (IOException e) {
-	 * e.printStackTrace();
-	 * }
-	 * return null;
-	 * }
-	 *
-	 * private Request createSellRequest(String[] tokens) {
-	 * if (tokens.length != 4) {
-	 * System.out.println("Utilização: sell <wine> <value> <quantity>");
-	 * return null;
-	 * }
-	 * String wine = tokens[1];
-	 * int value;
-	 * int quantity;
-	 * try {
-	 * value = Integer.parseInt(tokens[2]);
-	 * quantity = Integer.parseInt(tokens[3]);
-	 * } catch (Exception e) {
-	 * System.out.println("Value e quantity têm que ser inteiros");
-	 * return null;
-	 * }
-	 *
-	 * return Request.createSellOperation(wine, value, quantity);
-	 * }
-	 */
 
 	private static void menu() {
 		System.out.println("### MENU ###");

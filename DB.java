@@ -54,8 +54,7 @@ public class DB {
 			String usersFileCreatedString = usersFileCreated ? "Users file created ✅" : "Users file not created ❌";
 			String winesFileCreatedString = winesFileCreated ? "Wines file created ✅" : "Wines file not created ❌";
 			String sellsFileCreatedString = sellsFileCreated ? "Sales file created ✅" : "Sales file not created ❌";
-			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅"
-					: "Messages file not created ❌";
+			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅" : "Messages file not created ❌";
 			if (usersFileCreated && winesFileCreated && sellsFileCreated
 					&& messagesFileCreated) {
 				System.out.println(String.format("%s", usersFileCreatedString));
