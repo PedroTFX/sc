@@ -16,7 +16,7 @@
 			"type": "java",
 			"request": "launch",
 			"mainClass": "Tintolmarket",
-			"args": "127.0.0.1:12345 ./certificados/truststore.client ./certificados/keystore.cris password cris"
+			"args": "127.0.0.1:12345 ./certs/truststore.client ./certs/keystore.cris password cris"
 		},
 		{
 			"name": "server",
