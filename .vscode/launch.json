@@ -9,21 +9,21 @@
 			"type": "java",
 			"request": "launch",
 			"mainClass": "Tintolmarket",
-			"args": "127.0.0.1:12345 \"C:/Users/joaob/OneDrive/Ambiente de Trabalho/3 Ano 2 Semestre/SeC_seguranca_e_confiabilidade/sc/certificados/trustStore.jks\" ./certificados/joao.jks password joao"
+			"args": "127.0.0.1:12345 ./certs/truststore.client ./certs/keystore.joao password joao"
 		},
 		{
 			"name": "cris",
 			"type": "java",
 			"request": "launch",
 			"mainClass": "Tintolmarket",
-			"args": "127.0.0.1:12345 \"C:/Users/joaob/OneDrive/Ambiente de Trabalho/3 Ano 2 Semestre/SeC_seguranca_e_confiabilidade/sc/certificados/trustStore.jks\" ./certificados/cris.jks password cris"
+			"args": "127.0.0.1:12345 ./certificados/truststore.client ./certificados/keystore.cris password cris"
 		},
 		{
 			"name": "server",
 			"type": "java",
 			"request": "launch",
 			"mainClass": "TintolmarketServer",
-			"args": "12345 yamamakeydeusman ./certificados/server_ks.jks password"
+			"args": "12345 yamamakeydeusman ./certs/keystore.server password"
 		}
 	]
 }
