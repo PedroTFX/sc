@@ -1,5 +1,6 @@
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyStore;
@@ -12,7 +13,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 public class SecurityRSA {
@@ -119,5 +123,12 @@ public class SecurityRSA {
 		signature.initVerify(key);
 		signature.update(toSign);
 		return signature.verify(maybeSigned);
+	}
+
+	public static String encryptMessage(PublicKey publicKey, String encryptedMessage) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+		byte[] encryptedMessageBytes = cipher.doFinal(encryptedMessage.getBytes(StandardCharsets.UTF_8));
+		return new String(encryptedMessageBytes, StandardCharsets.UTF_8);
 	}
 }
