@@ -308,9 +308,10 @@ public class TintolmarketServer implements Serializable {
 				  Response response = null;
 				  Request.ClassifyWine classifyWine = (Request.ClassifyWine) request.payload;
 				  if (classifyWine.stars < 1 || classifyWine.stars > 5) {
-					response = new Response(Response.Type.ERROR,
-					new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
-				  }
+					response = new Response(Response.Type.ERROR, new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
+					//TODO VER SE ESTA LINHA RESOLVE O WARNING
+					//return response;
+				}
 
 				  return api.classifyWine(classifyWine.name, classifyWine.stars);
 			}
