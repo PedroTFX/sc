@@ -1,15 +1,17 @@
+import java.security.PublicKey;
+
 public class User {
-	/*
-     * Returns if the user and the password are a match
-     * If the user is not registered, register
-     */
-    public boolean authenticate(String user, String password) throws /* IO */Exception{
-		if(user == null || password == null){
-			return false;
-		}
-        if(Data.readUserInfoFromFile(user) != null){
-            return Data.confirmPassword(user, password);
-        }
-        return Data.registerUser(user + ":" + password + ":" + 200);
-    }
+	String name;
+	PublicKey key;
+	int balance;
+
+	User(String name, PublicKey key) {
+		this(name, key, Constants.STARTING_BALANCE);
+	}
+
+	User(String name, PublicKey key, int balance) {
+		this.name = name;
+		this.key = key;
+		this.balance = balance;
+	}
 }
