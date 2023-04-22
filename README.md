@@ -17,12 +17,6 @@ keytool -genkeypair -alias joao -keyalg RSA -keysize 2048 -storetype JCEKS -keys
 keytool -genkeypair -alias cristiano -keyalg RSA -keysize 2048 -storetype JCEKS -keystore cristiano.keystore
 keytool -genkeypair -alias mario -keyalg RSA -keysize 2048 -storetype JCEKS -keystore mario.keystore
 
-As passwords destas keystores são:
-serverpass
-joaopass
-cristianopass
-mariopass
-
 Cada um destes comandos vai gerar uma keystore (protegida por password) com uma chave privada lá dentro.
 Podemos ver as chaves dentro de uma keystore com este comando:
 keytool -list -storetype JCEKS -keystore <keystore filename>
@@ -48,9 +42,28 @@ keytool -import -alias joao -keystore truststore.keystore -file joaoRSApub.cer
 keytool -import -alias cristiano -keystore truststore.keystore -file cristianoRSApub.cer
 keytool -import -alias mario -keystore truststore.keystore -file marioRSApub.cer
 
-A password para a truststore é `sharedkeyspass`.
-
 
 Depois confirmamos que todas as chaves estão na truststore:
 
 keytool -list -v -keystore truststore.keystore
+
+
+
+tentar abrir o ssl socket sem trust store
+
+sacar a chave privada da keystore e a publica do certificado publico do client
+
+fazer load quando for falar com outros clientes
+
+perguntar sobre talk, sacamos a chave publica, ciframos e fazermos um pedido de tallk normal?
+
+
+
+# TODO
+- Acabámos de adicionar a extensão à DB para poder saber que ficheiro ler: porto.jpg, porto.png, porto.jpeg?
+- Agora temos que continuar a fazer o "view wine"/"list wine" e temos que usar a extensão que vem da DB para saber que ficheiro ler do disco.
+- Continuar com as outras funções
+
+
+ver a chave publica do client da truststore
+fazer as coisas em cima do exemplo
