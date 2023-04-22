@@ -1,20 +1,36 @@
-import java.util.Hashtable;
+import java.io.Serializable;
+import java.util.ArrayList;
 
-public class Wine {
+public class Wine implements Serializable {
 	String name;
-	String image;
-	int stock;
-	int price;
-	Hashtable<User, Integer> reviews;
+	String base64Image;
+	String extension;
+	private ArrayList<Integer> evals;
 
-	public Wine(String name, String image, String seller) {
+	Wine(String name, String base64Image, String extension) {
 		this.name = name;
-		this.image = image;
-		stock = price = 0;
-		reviews = new Hashtable<User, Integer>();
+		this.base64Image = base64Image;
+		this.extension = extension;
+		evals = new ArrayList<Integer>();
 	}
 
-	public String toString() {
-		return String.format("%s | %s | %d | %d | %s", name, image, stock, price, reviews);
+	Wine(String name, String base64Image, String extension, ArrayList<Integer> evals) {
+		this(name, base64Image, extension);
+		for (Integer integer : evals) {
+			this.evals.add(integer);
+		}
+	}
+
+
+	public double averageEvaluation() {
+		if(evals.size() == 0) {
+			return -1;
+		}
+
+		double sum = 0;
+		for (int e : evals) {
+			sum += e;
+		}
+		return sum / evals.size();
 	}
 }

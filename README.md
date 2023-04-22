@@ -1,154 +1,69 @@
-# sc
+tarefas:
 
-lista tarefas a fazer:
+gerar chaves do client e server com a keytool do java
+	usar keutool do java apra gerar chaves
+	ler secret key d keystroe e pulbic key do truststore
+	gerar ligacao com o ssl e a chave
 
-registar users
+# Keystore
 
-log in users
+Uma keystore é um ficheiro protegido por password que contém chaves (públicas ou privadas).
 
-add <wine> <image> - adiciona um novo vinho identificado por wine, associado à imagem
-image. Caso já exista um vinho com o mesmo nome deve ser devolvido um erro.
-Inicialmente o vinho não terá qualquer classificação e o número de unidades disponíveis
-será zero.
+Cada entidade (servidor, cliente1, cliente2, etc) vai precisar de uma keystore com a sua chave privada:
+keytool -genkeypair -alias <keyName> -keyalg RSA -keysize 2048 storetype JCEKS -keystore <keystoreFilename>
 
+keytool -genkeypair -alias server -keyalg RSA -keysize 2048 -storetype JCEKS -keystore server.keystore
+keytool -genkeypair -alias joao -keyalg RSA -keysize 2048 -storetype JCEKS -keystore joao.keystore
+keytool -genkeypair -alias cristiano -keyalg RSA -keysize 2048 -storetype JCEKS -keystore cristiano.keystore
+keytool -genkeypair -alias mario -keyalg RSA -keysize 2048 -storetype JCEKS -keystore mario.keystore
 
-• sell <wine> <value> <quantity> - coloca à venda o número indicado por quantity de
-unidades do vinho wine pelo valor value. Caso o wine não exista, deve ser devolvido um
-erro.
+Cada um destes comandos vai gerar uma keystore (protegida por password) com uma chave privada lá dentro.
+Podemos ver as chaves dentro de uma keystore com este comando:
+keytool -list -storetype JCEKS -keystore <keystore filename>
 
+keytool -list -storetype JCEKS -keystore server.keystore
+keytool -list -storetype JCEKS -keystore joao.keystore
+keytool -list -storetype JCEKS -keystore cristiano.keystore
+keytool -list -storetype JCEKS -keystore  mario.keystore
 
-• view <wine> - obtém as informações associadas ao vinho identificado por wine,
-nomeadamente a imagem associada, a classificação média e, caso existam unidades do
-vinho disponíveis para venda, a indicação do utilizador que as disponibiliza, o preço e a
-quantidade disponível. Caso o vinho wine não exista, deve ser devolvido um erro.
+Depois, temos que extrair/gerar chaves públicas a partir de cada uma daquelas chaves privadas:
+keytool -exportcert -alias <keyName> -storetype JCEKS -keystore <keystoreFilename> -file <publicCertificateFilename>
 
+keytool -exportcert -alias server -storetype JCEKS -keystore server.keystore -file serverRSApub.cer
+keytool -exportcert -alias joao -storetype JCEKS -keystore joao.keystore -file joaoRSApub.cer
+keytool -exportcert -alias cristiano -storetype JCEKS -keystore cristiano.keystore -file cristianoRSApub.cer
+keytool -exportcert -alias mario -storetype JCEKS -keystore mario.keystore -file marioRSApub.cer
 
-• buy <wine> <seller> <quantity> - compra quantity unidades do vinho wine ao utilizador
-seller. O número de unidades deve ser removido da quantidade disponível e deve ser
-transferido o valor correspondente à compra da conta do comprador para o vendedor.
-Caso o vinho não exista, ou não existam unidades suficientes, ou o comprador não tenha
-saldo suficiente, deverá ser devolvido e assinalado o erro correspondente.
+Finalmente, temos que colocar todas estas chaves públicas numa "truststore", que não é nada mais do que uma keystore com chaves públicas protegida por uma password partilhada entre as entidades que lhe têm que aceder:
+keytool -import -alias <keyName> -keystore <keystoreFilename> -file <publicCertificateFilename>
 
-
-• wallet - obtém o saldo atual da carteira.
-
-
-• classify <wine> <stars> - atribui ao vinho wine uma classificação de 1 a 5, indicada por stars.
-Caso o vinho wine não exista, deve ser devolvido um erro.
-
-
-• talk <user> <message> - permite enviar uma mensagem privada ao utilizador user (por
-exemplo, uma pergunta relativa a um vinho à venda). Caso o utilizador não exista, deve
-ser devolvido um erro.
-
-
-• read - permite ler as novas mensagens recebidas. Deve ser apresentada a identificação do
-remetente e a respetiva mensagem. As mensagens são removidas da caixa de mensagens
-do servidor depois de serem lidas.
-
-Acho que é excelente ideia fornecer uma API consistente que o servidor possa usar com Request e Response:
-```java
-class Request implements Serializable {
-	enum Type { AUTH, ADD, SELL, VIEW, BUY, WALLET, CLASSIFY, TALK, READ, QUIT }
-
-	Type type;
-	Object payload;
-
-	Request(Type type, Object payload) {
-		this.type = type;
-		this.payload = payload;
-	}
-
-	class Auth {
-		String user;
-		String password;
-	}
-
-	class Add {
-		String wine;
-		Image image;
-	}
-
-	// ...
-}
-
-class Response implements Serializable {
-	enum Type { OK, ERROR, WALLET, MAIL }
-
-	Type type;
-	Object payload;
-
-	class Error {
-		String message;
-	}
-
-	class Wallet {
-		int balance;
-	}
-
-	class Mail {
-		Hashtable<String, String[]> messages;
-	}
-}
-```
-
-Fazemos um pedido:
-```java
-Request request = new Request(Request.Type.Auth, new Request.Auth(user, password));
-out.writeObject(request);
-```
-E recebemos a resposta:
-```java
-Response response = in.readObject();
-Type type = response.type;
-Object payload = response.payload;
-
-if(type == Response.Type.ERROR) {
-	System.out.println(((Error) payload).message);
-} else if(type == Response.Type.OK) {
-	// Correu tudo bem
-} else if(type == Response.Type.WALLET) {
-	System.out.println(((Wallet) payload).balance);
-} // ...
-
-Request request = (Request) inStream.readObject();
-if(request.type == Request.Type.AUTH) {
-	Auth auth = (Auth) request.payload;
-	authentication(auth.user, auth.password);
-}
-```
-
-No servidor, fazemos isto:
-```java
+keytool -import -alias server -keystore truststore.keystore -file serverRSApub.cer
+keytool -import -alias joao -keystore truststore.keystore -file joaoRSApub.cer
+keytool -import -alias cristiano -keystore truststore.keystore -file cristianoRSApub.cer
+keytool -import -alias mario -keystore truststore.keystore -file marioRSApub.cer
 
 
-Request request = (Request) inStream.readObject();
-Type type = request.type;
-Object payload = request.payload;
-if(type == response.Type.AUTH) {
-	Auth auth = (Auth) request.payload;
-	// Agora temos acesso a auth.user e auth.password;
-} // ...
-```
+Depois confirmamos que todas as chaves estão na truststore:
+
+keytool -list -v -keystore truststore.keystore
 
 
-Para escrever os dados nos ficheiros, devemos ter uma classe responsável por receber um objecto qualquer e escrevê-lo no disco.
-```java
-class Data {
-	public void write(Object object);
-	public Object read();
-}
-```
 
-A responsabilidade de utilizar esta classe é do servidor, ou seja, o servidor tem uma estrutura de dados qualquer e apenas pede à Data para guardar essa estrutura em disco. A estrutura em si podem ser as classes User e Wine (Image já faz parte do Java).
+tentar abrir o ssl socket sem trust store
 
-Por exemplo, no servidor:
-```java
-Hashtable<String, User> users;
+sacar a chave privada da keystore e a publica do certificado publico do client
 
-// Na inicialização do servidor:
-users = (Hashtable<String, User>) db.read();
+fazer load quando for falar com outros clientes
 
-// Sempre que alterarmos os dados (no fim do ciclo de atendimento a pedidos):
-db.write(users); // <- Todos os dados estão dentro do 'users'
-```
+perguntar sobre talk, sacamos a chave publica, ciframos e fazermos um pedido de tallk normal?
+
+
+
+# TODO
+- Acabámos de adicionar a extensão à DB para poder saber que ficheiro ler: porto.jpg, porto.png, porto.jpeg?
+- Agora temos que continuar a fazer o "view wine"/"list wine" e temos que usar a extensão que vem da DB para saber que ficheiro ler do disco.
+- Continuar com as outras funções
+
+
+ver a chave publica do client da truststore
+fazer as coisas em cima do exemplo

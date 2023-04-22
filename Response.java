@@ -1,37 +1,57 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class Response implements Serializable {
 	enum Type {
-		OK, ERROR
+		AUTHNONCE, OK, ERROR, VIEWWINE, READ
 	}
 
 	Type type;
-	String message;
-	String image;
-	int averageWineClassification;
-	String seller;
-	int price;
-	int quantity;
-	int balance;
-	Hashtable<String, String[]> messages;
+	Object payload;
 
-	public String toString() {
-		return String.format("%s | %s | %s | %d | %s | %d | %d | %d | %s", type, message, image,
-				averageWineClassification, seller, price, quantity, balance, messages);
+	static class AuthNonce implements Serializable{
+		long nonce;
+		boolean newUser;
+
+		AuthNonce(long nonce, boolean newUser) {
+			this.nonce = nonce;
+			this.newUser = newUser;
+		}
 	}
 
-	private Response(Type operation) {
-		this.type = operation;
+	static class OK implements Serializable{
+		String message;
+
+		OK(String message) {
+			this.message = message;
+		}
 	}
 
-	public Response() {
+	static class Error implements Serializable {
+		String message;
 
+		Error(String message) {
+			this.message = message;
+		}
 	}
 
-	static public Response createAuthenticateResponse(String message, boolean ok) {
-		Response response = new Response(ok ? Type.OK : Type.ERROR);
-		response.message = message;
-		return response;
+	static class ViewWineAndListings extends ViewWine {
+		ViewWineAndListings(Wine wine, ArrayList<Listing> listings) {
+			super(wine, listings);
+		}
 	}
-}// class
+
+	Response(Type type, Object payload){
+		this.type = type;
+		this.payload = payload;
+	}
+
+	static class ReadMessages implements Serializable {
+		Hashtable<String, ArrayList<String>> messages;
+
+		ReadMessages(Hashtable<String, ArrayList<String>> messages) {
+			this.messages = messages;
+		}
+	}
+}

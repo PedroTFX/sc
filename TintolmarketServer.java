@@ -2,56 +2,74 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Set;
+import java.security.PublicKey;
+import java.util.Random;
+
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 
 public class TintolmarketServer implements Serializable {
-
-	private static int port = 12345;
-	private static Hashtable<String, User> userTable;
-	private static ArrayList<Wine> wines;
+	private static boolean close = false;
+	private API api = null;
 
 	public static void main(String[] args) {
-		System.out.println("servidor: main");
-		TintolmarketServer server = new TintolmarketServer();
-		userTable = new Hashtable<String, User>();
-		wines = new ArrayList<Wine>();
-		UserInfo userInfo = new UserInfo("users.txt");
+		if (args.length != 3 && args.length != 4) {
+			System.out.println(
+					"Usage: java TintolmarketServer [port] <databasePassword> <keystoreFilename> <keystorePassword>");
+			return;
+		}
 
-		// getting port from args else defaults to 1234
-		port = args.length > 0 ? Integer.parseInt(args[0]) : port;
-		server.startServer(port);
+		int index = 0;
+		int port = 12345;
+		if (args.length == 4) {
+			port = Integer.parseInt(args[index++]);
+		}
+		String passwordCifra = args[index++];
+		String keystore = args[index++];
+		String keystorePassword = args[index];
+
+		new TintolmarketServer(port, passwordCifra, keystore, keystorePassword);
 	}
 
-	/**
-	 * Starts the server on the specified port
-	 *
-	 * @param port
-	 */
-	public void startServer(int port) {
-		ServerSocket sSoc = null;
+	TintolmarketServer(int port, String passwordCifra, String keystoreFilename, String keystorePassword) {
+		// Initialize API
+		api = new API(passwordCifra);
+
+		// Initialize server
+		startServer(port, keystoreFilename, keystorePassword);
+	}
+
+	private void startServer(int port, String keystoreFilename, String keystorePassword) {
+		// Initialize secure server socket
+		SSLServerSocket sslServerSocket = initSecureServerSocket(port, keystoreFilename, keystorePassword);
 
 		try {
-			sSoc = new ServerSocket(port);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
-		}
-
-		while (true) {
-			try {
-				Socket inSoc = sSoc.accept();
+			while (!close) {
+				SSLSocket inSoc = (SSLSocket) sslServerSocket.accept();
 				new ServerThread(inSoc);
-				int i = 0;
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+			sslServerSocket.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		// sSoc.close();
+	}
+
+	private SSLServerSocket initSecureServerSocket(int port, String keystoreFilename, String keystorePassword) {
+		SSLServerSocket sslServerSocket = null;
+		try {
+			System.setProperty("javax.net.ssl.keyStore", keystoreFilename);
+			System.setProperty("javax.net.ssl.keyStorePassword", keystorePassword);
+			/* SSL */ServerSocketFactory sslServerSocketFactory = /* (SSLServerSocketFactory) */ SSLServerSocketFactory
+					.getDefault();
+			sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(port);
+			System.out.println("Server started on port " + port + "...");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return sslServerSocket;
 	}
 
 	// Threads utilizadas para comunicacao com os clientes
@@ -59,7 +77,8 @@ public class TintolmarketServer implements Serializable {
 		private Socket socket = null;
 		ObjectOutputStream outStream;
 		ObjectInputStream inStream;
-		String userId = null;
+		String threadUserID = null;
+		boolean close = false;
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
@@ -68,181 +87,282 @@ public class TintolmarketServer implements Serializable {
 
 		public void run() {
 			// Initialization
-			init();
-			System.out.println("Thread inicializada");
+			initConnectionStreams();
 
 			// Authentication
-			authenticate();
-			System.out.printf("Utilizador %s autenticado\n", userId);
+			new Authentication();
 
 			// Listen to requests
 			listen();
 
 			// Close socket and thread
-			close();
+			closeServerThread();
 		}
 
-		private void init() {
+		private void initConnectionStreams() {
 			try {
-				outStream = new ObjectOutputStream(socket.getOutputStream());
 				inStream = new ObjectInputStream(socket.getInputStream());
+				outStream = new ObjectOutputStream(socket.getOutputStream());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 
-		private void authenticate() {
-			try {
-				//init
-				Request request = (Request) inStream.readObject();			// Read request
-				Response response = new Response();							// Prepare response
+		class Authentication {
+			String authenticationUserID;
+			long nonce;
 
-				// Check if request is an authentication request
-				if (request.operation != Request.Operation.AUTHENTICATE) {
-					response.type = Response.Type.ERROR;
-					response.message = "O utilizador tem que se autenticar primeiro!";
+			Authentication() {
+				try {
+					// Receive authentication request (and get authenticationUserID)
+					receiveAuthRequest();
+
+					// Reply with nonce and flag that indicates if user ID exists
+					nonce = new Random().nextLong();
+					User newUser = api.getUser(authenticationUserID);// Data.readUserInfoFromFile(authenticationUserID)
+					outStream.writeObject(
+							new Response(Response.Type.AUTHNONCE, new Response.AuthNonce(nonce, newUser == null)));
+
+					// Register or login user
+					Response response = null;
+					if (newUser == null) {
+						response = register();
+					} else {
+						response = login();
+					}
+
 					outStream.writeObject(response);
-					close();
 
+					// Everything OK: save userID in thread
+					threadUserID = authenticationUserID;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+			void receiveAuthRequest() throws Exception {
+				Request request = (Request) inStream.readObject();
+				Request.Type type = request.type;
+				Object payload = request.payload;
+
+				// Check if operation is AUTH USER ID
+				if (type != Request.Type.AUTHUSERID) {
+					outStream.writeObject(new Response(Response.Type.ERROR, new Response.Error(
+							"O utilizador tem que se autenticar primeiro!")));
+					return;
 				}
 
-				// Check if user exists and password is correct
+				authenticationUserID = ((Request.AuthUserID) payload).userID;
+			}
 
-				response.type = Response.Type.OK;
-				response.message = "OK";
-				if (!UserInfo.authentication(request.user, request.password)) {
-					response.type = Response.Type.ERROR;
-					response.message = "Combinação userID/password incorreta";
-					outStream.writeObject(response);
-					close();
+			Response register() throws Exception {
+				// Read request
+				Request request = (Request) inStream.readObject();
+
+				// Check if it's a registration request
+				if (request.type != Request.Type.AUTHREGISTER) {
+					close = true;
+					return new Response(Response.Type.ERROR,
+							new Response.Error("You need to send an AUTHREGISTER operation!"));
 				}
 
-				// Send response
-				outStream.writeObject(response);
-			} catch (Exception e1) {
-				e1.printStackTrace();
+				// Get payload
+				Request.AuthRegister requestAuth = (Request.AuthRegister) request.payload;
+				long clientNonce = requestAuth.nonce;
+				byte[] signedNonce = requestAuth.signedNonce;
+				PublicKey publicKey = requestAuth.key;
+
+				// Check nonce
+				if (!isValidNonce(clientNonce)) {
+					close = true;
+					return new Response(Response.Type.ERROR, new Response.Error(
+							"You need to send the same nonce back!"));
+				}
+
+				// Check signed nonce
+				if (!SecurityRSA.isSignedNonce(ByteUtils.longToByteArray(clientNonce), signedNonce, publicKey)) {
+					close = true;
+					return new Response(Response.Type.ERROR, new Response.Error(
+							"Nonce has the wrong signature!"));
+				}
+
+				// Register user
+				User user = new User(authenticationUserID, publicKey);
+				User addedUser = api.addUser(user);
+				if (addedUser == null) {
+					return new Response(Response.Type.ERROR, new Response.Error(
+							"Failed to create new user!"));
+				}
+
+				return new Response(Response.Type.OK,
+						new Response.OK(String.format("%s successfully registered!", authenticationUserID)));
+			}
+
+			boolean isValidNonce(long clientNonce) {
+				return nonce == clientNonce;
+			}
+
+			Response login() throws Exception {
+				// Read request
+				Request request = (Request) inStream.readObject();
+
+				// Check if it's a registration request
+				if (request.type != Request.Type.AUTHLOGIN) {
+					close = true;
+					return new Response(Response.Type.ERROR,
+							new Response.Error("You need to send an AUTHLOGIN operation!"));
+				}
+
+				Request.AuthLogin requestAuthLogin = (Request.AuthLogin) request.payload;
+				long clientNonce = requestAuthLogin.nonce;
+				byte[] signedNonce = requestAuthLogin.signedNonce;
+
+				// Check nonce
+				if (!isValidNonce(clientNonce)) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("You need to send the same nonce back!"));
+				}
+
+				// Get user's public key and check if the nonce was correctly signed
+				User user;
+				try {
+					user = api.getUser(authenticationUserID);
+				} catch (Exception e) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("Error getting this user from the database!"));
+				}
+				if (!SecurityRSA.isSignedNonce(ByteUtils.longToByteArray(clientNonce), signedNonce, user.key)) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("Nonce has the wrong signature!"));
+				}
+
+				return new Response(Response.Type.OK,
+						new Response.OK(String.format("%s successfully logged in!", authenticationUserID)));
 			}
 		}
 
 		private void listen() {
-			System.out.printf("Listening to client %s requests...\n", userId);
-			while (!socket.isClosed()) {
+			System.out.printf("Listening to client %s requests...\n", threadUserID);
+			while (!socket.isClosed() && !close) {
 				try {
 					Request request = (Request) inStream.readObject();
-					outStream.writeObject(processRequest(request));
+					Response response = processRequest(request);
+					outStream.writeObject(response);
 				} catch (Exception e1) {
-					e1.printStackTrace();
+					System.out.println("Houve uma excepção no cliente, vamos fechar a ligação...");
+					close = true;
 				}
-				/*
-				 * // TODO: refazer
-				 * // este codigo apenas exemplifica a comunicacao entre o cliente e o servidor
-				 * // nao faz qualquer tipo de autenticacao
+			}
+		}
+
+		private Response processRequest(Request request) throws Exception {
+			Request.Type type = request.type;
+			Object payload = request.payload;
+
+			if (type == Request.Type.ADDWINE) {
+				Request.AddWine requestAddWine = (Request.AddWine) payload;
+
+				if (api.addWine(requestAddWine.wine) == null) {
+					return new Response(Response.Type.ERROR, new Response.Error("Esse vinho já existe!"));
+				}
+
+				return new Response(Response.Type.OK, new Response.OK("Vinho adicionado com sucesso"));
+			} else if (type == Request.Type.LISTWINE) {
+				Request.ListWine requestListWine = (Request.ListWine) payload;
+
+				if (api.listWine(threadUserID, requestListWine.name,
+						requestListWine.quantity, requestListWine.price) == false) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("Esse vinho não existe. Crie-o primeiro."));
+				}
+
+				return new Response(Response.Type.OK, new Response.OK("Vinho colocado à venda com sucesso!"));
+			} else if (type == Request.Type.VIEWWINE) {
+				Request.ViewWine requestViewWine = (Request.ViewWine) payload;
+
+				ViewWine viewWine = api.getWine(requestViewWine.name);
+				if (viewWine == null) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("Esse vinho não existe."));
+				}
+
+				return new Response(Response.Type.VIEWWINE,
+						new Response.ViewWineAndListings(viewWine.wine, viewWine.listings));
+
+			} else if (type == Request.Type.BUYWINE) {
+				Request.BuyWine requestBuyWine = (Request.BuyWine) payload;
+				return api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller, threadUserID);
+			} else if (type == Request.Type.WALLET) {
+				  Response response = null;
+				  User user = api.getUser(threadUserID);
+				  if (user == null) {
+					response = new Response(Response.Type.ERROR,
+					new Response.Error("Erro a obter saldo. user nao existe"));
+				  } else {
+					response = new Response(Response.Type.OK,
+					new Response.OK("Saldo obtido com sucesso: " + user.balance));
+					System.out.println("saldo: " + (user.balance) + " user: " + threadUserID);
+				  }
+				  return response;
+			} else if (type == Request.Type.CLASSIFY) {
+				  Response response = null;
+				  Request.ClassifyWine classifyWine = (Request.ClassifyWine) request.payload;
+				  if (classifyWine.stars < 1 || classifyWine.stars > 5) {
+					response = new Response(Response.Type.ERROR,
+					new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
+				  }
+
+				  return api.classifyWine(classifyWine.name, classifyWine.stars);
+			}
+				 /*
+				 if (wine == null) {
+					response = new Response(Response.Type.ERROR, new
+					Response.Error("Esse vinho nao existe"));
+				  }
+
+				  api.classifyWine(classifyWine.name, classifyWine.stars);
+
+				  response = new Response(Response.Type.OK, new
+				  Response.OK("vinho classificado com sucesso"));
+				  return response; */
+				 /* } else if (type == Request.Type.TALK) {
+
+				  boolean messageSent = Logic.sendMessage(userId, request.user,
+				  request.message);
+
+				  if (messageSent) {
+				  response.type = Response.Type.OK;
+				  } else {
+				  response.type = Response.Type.ERROR;
+				  response.message = "Recetor não existe";
+				  }
+
+				  /*} else if (type == Request.Type.READ) {
+				 * response.messages = Logic.getMessages(userId);
 				 *
-				 * // checks if the user exists in the userTable, if it does, checks if the
-				 * // password is correct
-				 * // returns OK if the user exists and the password is correct, ERROR otherwise
-				 * if (request.operation == Request.Operation.AUTHENTICATE) {
-				 * if ((checkUser(request.user, request.password))) {
-				 * response.type = Response.Type.OK;
-				 * response.message = "hahha";
+				 * if (response.messages.size() > 0) {
+				 * response.type = Response.Type.READ;
 				 * } else {
 				 * response.type = Response.Type.ERROR;
-				 * response.message = "NOT OK";
-				 * }
-				 * outStream.writeObject(response);
-				 * System.out.println("autentica");
+				 * response.message = "nao tens nada para ler";
 				 * }
 				 *
-				 * /*
-				 * try {
-				 * request = (Request) inStream.readObject();
-				 * // pass = (String) inStream.readObject();
+				 * } else if (type == Request.Type.READ) {
 				 *
-				 * } catch (ClassNotFoundException e1) {
-				 * e1.printStackTrace();
 				 * }
 				 */
 
-				// TODO: loop between client and server for the actual communication
-				/*
-				 * if (request.operation == Request.Operation.WALLET) {
-				 * response.type = Response.Type.OK;
-				 * response.balance = 200;
-				 * outStream.writeObject(response);
-				 * System.out.println("responsi ao wallet");
-				 * } else {
-				 * response.type = Response.Type.ERROR;
-				 * response.balance = 199;
-				 * }
-				 * System.out.println("fim while");
-				 * request = null;
-				 * }
-				 */
-				System.out.println(userTable);
-			}
+			return new Response(Response.Type.ERROR, new Response.Error("UNIMPLEMENTED"));
 		}
 
-		private Response processRequest(Request request) {
-			System.out.printf("REQUEST: %s\n", request);
-			Response response = new Response();
-			User user = userTable.get(userId);
-			Wine wine = null;
-			if (request.wine != null) {
-				wine = user.wineList.get(request.wine);
-			}
-			if (request.operation == Request.Operation.ADD) {
-				//User user = userTable.get(userId);
-				if (user.wineList.containsKey(request.wine)) {
-					response.type = Response.Type.ERROR;
-					response.message = "Esse vinho já existe!";
-				} else {
-					Wine newWine = new Wine(request.wine, request.image, userId);
-					user.wineList.put(request.wine, newWine);
-					wines.add(newWine);
-					response.type = Response.Type.OK;
-				}
-			} else if (request.operation == Request.Operation.SELL) {
-				//User user = userTable.get(userId);
-				//Wine wine = user.wineList.get(request.wine);
-				if (wine == null) {
-					response.type = Response.Type.ERROR;
-					response.message = "Esse vinho não existe!";
-				} else {
-					wine.stock -= request.quantity;
-					wine.price = request.value;
-					response.type = Response.Type.OK;
-				}
-			} else if (request.operation == Request.Operation.VIEW) {
-				if (wine == null) {
-					response.type = Response.Type.ERROR;
-					response.message = "Este vinho nao existe";
-				}
-				response.averageWineClassification = averageWineClasification(wine.reviews);
-				response.type = Response.Type.OK;
-			} else if(request.operation == Request.Operation.WALLET){
-				response.type = Response.Type.OK;
-				response.balance = user.balance;
-			}
-			System.out.printf("RESPONSE: %s\n", response);
-			return response;
-		}
-
-		private int averageWineClasification(Hashtable<User, Integer> reviews) {
-			int sum = 0;
-			Set<User> userSet = reviews.keySet();
-			for (User user : userSet) {
-				sum += reviews.get(user);
-			}
-			return sum / userSet.size();
-		}
-
-		private void close() {
+		private void closeServerThread() {
 			try {
+				System.out.println("closing thread for " + threadUserID);
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			System.exit(-1);
 		}
 	}
+
 }

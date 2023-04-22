@@ -1,20 +1,33 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.Socket;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 public class Tintolmarket implements Serializable {
+	private PrivateKey privateKey = null;
 	private static Scanner sc = new Scanner(System.in);
-	private Socket clientSocket = null;
+	private SSLSocket clientSocket = null;
+	//private SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+	SSLSocket sslsocket = null;
 	private ObjectInputStream in = null;
 	private ObjectOutputStream out = null;
+	private boolean close = false;
+	//private BufferedImage bfimage = null;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		// Verificar se temos pelo menos 2 argumentos
-		if (args.length < 2) {
-			System.out.println("Utilizacao: java TintolMarket <server-address>[:port] <userId> [password]");
+		if (args.length != 5) {
+			System.out.println(
+					"Utilizacao: java Tintolmarket <serverAddress[:port>] <truststore> <keystore> <password-keystore> <userID>");
 			return;
 		}
 
@@ -23,23 +36,22 @@ public class Tintolmarket implements Serializable {
 		String serverAddress = serverAddressPort[0];
 		int serverPort = serverAddressPort.length > 1 ? Integer.parseInt(serverAddressPort[1]) : 12345;
 
-		// Obter userID and password
-		String userId = args[1];
-		String password = args.length > 2 ? args[2] : getPassword();
+		String trustStore = args[1];
+		String keyStore = args[2];
+		String keyStorePassword = args[3];
+		String userId = args[4];
+		createFolder("client-images");
 
 		// Lançar
-		new Tintolmarket(serverAddress, serverPort, userId, password);
+		new Tintolmarket(serverAddress, serverPort, trustStore, keyStore, keyStorePassword, userId);
 	}
 
-	private static String getPassword() {
-		System.out.print("Introduza a sua password: ");
-		return sc.nextLine();
-	}
+	private Tintolmarket(String host, int port, String trustStore, String keyStore, String keyStorePassword, String userId) throws Exception {
+		privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 
-	private Tintolmarket(String host, int port, String userId, String password) {
-		initializeServerConnection(host, port);
+		initializeServerConnection(host, port, trustStore);
 
-		authenticateUser(userId, password);
+		new Authentication(keyStore, keyStorePassword, userId);
 
 		run();
 
@@ -48,282 +60,320 @@ public class Tintolmarket implements Serializable {
 		close();
 	}
 
-	private void initializeServerConnection(String host, int port) {
+	private void initializeServerConnection(String host, int port, String trustStoreFilename) {
 		try {
-			clientSocket = new Socket(host, port);
-			in = new ObjectInputStream(clientSocket.getInputStream());
+			System.setProperty("javax.net.ssl.trustStore", trustStoreFilename);
+			System.setProperty("javax.net.ssl.trustStorePassword", "password");
+			/* SocketFactory sf = SSLSocketFactory.getDefault();
+			clientSocket = (SSLSocket) sf.createSocket(host, port); */
+			/* SSL*/SocketFactory sslSocketFactory = /* (SSLSocketFactory) */ SSLSocketFactory.getDefault();
+			clientSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
 			out = new ObjectOutputStream(clientSocket.getOutputStream());
-		} catch (IOException e) {
+			in = new ObjectInputStream(clientSocket.getInputStream());
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void authenticateUser(String userId, String password) {
-		Request authentication = Request.createAuthenticateOperation(userId, password);
-		Response response = null;
-
-		try {
-			out.writeObject((Request) authentication);
-			response = (Response) in.readObject();
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		// Print error if there's one
-		if (response.type == Response.Type.ERROR) {
-			System.out.println(response.message);
-			System.exit(1);
-		}
-
-		System.out.println("Utilizador autenticado " + response.message);
-	}
-
-	private void run() {
-		while (true) {
-
-			Request request;
-			do {
-				// Show menu
-				menu();
-
-				// Read command
-				request = readRequest();
-			} while (request == null);
-
+	class Authentication {
+		Authentication(String keyStore, String keyStorePassword, String userID) {
 			try {
-				// Send request to server
-				out.writeObject(request);
+				// Send userID
+				sendAuthRequest(userID);
 
-				// Receive response from server
+				// Receive response
 				Response response = (Response) in.readObject();
 
-				// Print response
-				System.out.println(response);
+				// Check if response is Auth Nonce
+				if (response.type != Response.Type.AUTHNONCE) {
+					out.writeObject(new Response(Response.Type.ERROR,
+							new Response.Error("Server did not send a nonce response!")));
+					return;
+				}
+
+				// Extract data from response
+				Response.AuthNonce responseAuthNonce = (Response.AuthNonce) response.payload;
+				long nonce = responseAuthNonce.nonce;
+				boolean newUser = responseAuthNonce.newUser;
+
+				// If we're a new user, register, otherwise login
+				PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userID);
+				byte[] bytesLong = ByteUtils.longToBytes(nonce);
+				byte[] signedNonce = SecurityRSA.sign(bytesLong, privateKey);
+				PublicKey publicKey = SecurityRSA.getPublicKey(keyStore, keyStorePassword, userID);
+				Request request = newUser
+						? new Request(Request.Type.AUTHREGISTER, new Request.AuthRegister(nonce, signedNonce,
+								publicKey))
+						: new Request(Request.Type.AUTHLOGIN, new Request.AuthLogin(nonce, signedNonce));
+				out.writeObject(request);
+
+				// Wait for confirmation
+				Response confirmationResponse = (Response) in.readObject();
+
+				// Check if there was an error
+				if (confirmationResponse.type != Response.Type.OK) {
+					Response.Error error = (Response.Error) confirmationResponse.payload;
+					System.out.println("Error: " + error.message);
+					System.exit(-1);
+				}
+
+				// Everything ok: print succcess message
+				Response.OK ok = (Response.OK) confirmationResponse.payload;
+				System.out.println(ok.message);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
-		/*
-		 * Request request = null;
-		 * String line = null;
-		 * String[] tokens;
-		 * while (sc.hasNext()) {
-		 * line = sc.nextLine();
-		 * tokens = line.split(" ");
-		 * System.out.println(tokens[0]);
-		 * if (tokens[0].equals("wallet") || tokens[0].equals("w")) {
-		 * request = Request.createWalletOperation();
-		 * try {
-		 * out.writeObject(request);
-		 * } catch (IOException e) {
-		 * e.printStackTrace();
-		 * }
-		 * System.out.println("wallet enviado");
-		 * } else if (tokens[0].equals("add") || tokens[0].equals("a")) {
-		 * if (tokens.length == 3) {
-		 * request = Request.createAddOperation(tokens[1], tokens[2]);
-		 * try {
-		 * out.writeObject(request);
-		 * } catch (IOException e) {
-		 * e.printStackTrace();
-		 * }
-		 * } else {
-		 * System.out.println("Utilizacao: add <wine> <image>");
-		 * }
-		 * } else if (tokens[0].equals("sell") || tokens[0].equals("s")) {
-		 * if (tokens.length == 4) {
-		 * request = Request.createSellOperation(tokens[1], Integer.parseInt(tokens[2]),
-		 * Integer.parseInt(tokens[3]));
-		 * }
-		 * } else if (tokens[0].equals("view") || tokens[0].equals("v")) {
-		 * if (tokens.length == 2) {
-		 * request = Request.createViewOperation(tokens[1]);
-		 * }
-		 * }
-		 * if (tokens[0].equals("xau")) {
-		 * break;
-		 * }
-		 *
-		 * try {
-		 * out.writeObject(request);
-		 * System.out.println("mensagem enviada");
-		 * } catch (IOException e) {
-		 * System.out.println("erro a comunicar com o server");
-		 * // TODO Auto-generated catch block
-		 * // e.printStackTrace();
-		 * }
-		 *
-		 * System.out.println("info sff...");
-		 *
-		 * try {
-		 * int num = -1;
-		 * Response response = null;
-		 *
-		 * if (request.operation == Request.Operation.ADD) {
-		 * response = (Response) in.readObject();
-		 * if (response.type == Response.Type.ERROR) {
-		 * System.out.println(response.message);
-		 * } else {
-		 * System.out.printf("Vinho %s adicionado com sucesso", request.wine);
-		 * }
-		 * }
-		 *
-		 * if (request.operation == Request.Operation.WALLET) {
-		 * System.out.println("recebi resposta do server");
-		 * response = (Response) in.readObject();
-		 * num = response.balance;
-		 * } else {
-		 * num = -1;
-		 * }
-		 * } catch (ClassNotFoundException e) {
-		 * // TODO Auto-generated catch block
-		 * // e.printStackTrace();
-		 * System.out.println("nao encontro nada amigo");
-		 * } catch (IOException e) {
-		 * // TODO Auto-generated catch block
-		 * System.out.println("io exception");
-		 * e.printStackTrace();
-		 * }
-		 * }
-		 */
+		private void sendAuthRequest(String userID) throws IOException {
+			Request request = new Request(Request.Type.AUTHUSERID, new Request.AuthUserID(userID));
+			out.writeObject(request);
+		}
 	}
 
-	private Request readRequest() {
-		String line = sc.nextLine();
+	private void run() throws IOException {
+		while (!close) {
+
+			Request request;
+			do {
+				menu();
+				request = readRequest();
+			} while (request == null);
+
+			try {
+				out.writeObject(request);
+
+				Response response = (Response) in.readObject();
+
+				if(response.type == Response.Type.ERROR) {
+					System.out.println(((Response.Error) response.payload).message);
+				} else if (response.type == Response.Type.OK) {
+					System.out.println(((Response.OK) response.payload).message);
+				} else if(response.type == Response.Type.VIEWWINE) {
+					Response.ViewWineAndListings viewWineAndListings = (Response.ViewWineAndListings) response.payload;
+					Wine wine = viewWineAndListings.wine;
+
+					// Show wine info
+					double avg = wine.averageEvaluation();
+					String averageEvaluation = avg == -1 ? "no evaluations yet" : String.format("%.2f stars", avg);
+					String line = String.format("%s (%s)", wine.name, averageEvaluation);
+					System.out.println(line);
+
+					// Save wine image
+					ImageUtils.base64ToFile(Constants.CLIENT_IMAGES_FOLDER, wine.name, wine.base64Image, wine.extension);
+
+					// Show listings
+					ArrayList<Listing> listings = viewWineAndListings.listings;
+					System.out.println("LISTINGS:");
+					for (Listing listing : listings) {
+						System.out.println(String.format("%s is selling %d bottles of %s at %d€.", listing.seller, listing.quantity, listing.name, listing.price));
+					}
+
+				}
+			} catch (Exception e2) {
+				close = true;
+				e2.printStackTrace();
+			}
+		}
+	}
+
+	private Request readRequest() throws IOException {
+		String line = null;
+		try {
+			line = sc.nextLine();
+		} catch (Exception e) {
+			disconnectFromServer();
+		}
+
 		String[] tokens = line.split(" ");
 		String operation = tokens[0];
 
-		/* interface CreateRequest {
-			Request get(String[] tokens);
-		}
-
-		CreateRequest[] requests = new CreateRequest[] {
-			new CreateRequest() { public Request get(String[] tokens) { return createAddRequest(tokens); }},
-			new CreateRequest() { public Request get(String[] tokens) { return createSellRequest(tokens); }},
-		};
-
-		return requests[0].get(tokens); */
-
 		if (operation.equals("add") || operation.equals("a")) {
-			return createAddRequest(tokens);
+			// Check arguments
+			if (tokens.length != 3) {
+				System.out.println("Usage: add <wine> <image>");
+				return null;
+			}
+
+			// Extract arguments
+			String wine = tokens[1];
+			String imageName = tokens[2];
+			String[] imageNameTokens = imageName.split("\\.");
+			String extension = imageNameTokens[imageNameTokens.length - 1];
+
+			// Read image file into base64 string
+			String base64Image = ImageUtils.fileToBase64("", imageName);
+
+			return new Request(Request.Type.ADDWINE, new Request.AddWine(new Wine(wine, base64Image, extension)));
 		} else if (operation.equals("sell") || operation.equals("s")) {
-			return createSellRequest(tokens);
+			if (tokens.length != 4) {
+				System.out.println("Usage: sell <wine> <value> <quantity>");
+				return null;
+			}
+
+			String wineName = tokens[1];
+			int value = Integer.parseInt(tokens[2]);
+			int quantity = Integer.parseInt(tokens[3]);
+
+			return new Request(Request.Type.LISTWINE, new Request.ListWine(wineName, value, quantity));
 		} else if (operation.equals("view") || operation.equals("v")) {
-			return createViewRequest(tokens);
+			if(tokens.length != 2){
+				System.out.println("Usage: view <wine>");
+			}
+
+			return new Request(Request.Type.VIEWWINE, new Request.ViewWine(tokens[1]));
 		} else if (operation.equals("buy") || operation.equals("b")) {
-			return createBuyRequest(tokens);
+			if (tokens.length != 4) {
+				System.out.println("Usage: buy <wine> <seller> <quantity>");
+			}
+
+			String wineName = tokens[1];
+			String seller = tokens[2];
+			int quantity = Integer.parseInt(tokens[3]);
+
+			return new Request(Request.Type.BUYWINE, new Request.BuyWine(wineName, seller, quantity));
 		} else if (operation.equals("wallet") || operation.equals("w")) {
-			return createWalletRequest(tokens);
+			return new Request(Request.Type.WALLET, null);
 		} else if (operation.equals("classify") || operation.equals("c")) {
-			return createClassifyRequest(tokens);
+			// Check arguments
+			if (tokens.length != 3) {
+				System.out.println("Usage: classify <wine> <stars>");
+				return null;
+			}
+
+			return new Request(Request.Type.CLASSIFY, new Request.ClassifyWine(tokens[1], Integer.parseInt(tokens[2])));
+
 		} else if (operation.equals("talk") || operation.equals("t")) {
-			return createTalkRequest(tokens);
+			if (tokens.length != 3) {
+				System.out.println("Usage: talk <user> <message>");
+				return null;
+			}
+
+			return new Request(Request.Type.TALK, new Request.Talk(tokens[0], tokens[1]));
 		} else if (operation.equals("read") || operation.equals("r")) {
-			return createReadRequest(tokens);
+			return new Request(Request.Type.READ, null);
+		} else if(operation.equals("list") || operation.equals("l")){
+			return new Request(Request.Type.LISTWINE, null);
 		}
+
 		return null;
 	}
-
-	private Request createReadRequest(String[] tokens) {
-		if (tokens.length != 2) {
-			System.out.println("Utilização: read");
-			return null;
-		}
-		return Request.createReadOperation();
-	}
-
-	private Request createTalkRequest(String[] tokens) {
-		if (tokens.length != 3) {
-			System.out.println("Utilização: talk <user> <message>");
-			return null;
-		}
-		String user = tokens[1];
-		String message = tokens[2];
-		return Request.createTalkOperation(user, message);
-	}
-
-	private Request createClassifyRequest(String[] tokens) {
-		if (tokens.length != 3) {
-			System.out.println("Utilização: classify <wine> <stars>");
-			return null;
-		}
-		String wine = tokens[1];
-		int stars;
-		try {
-			stars = Integer.parseInt(tokens[3]);
-		} catch (Exception e) {
-			System.out.println("Stars têm que ser inteiros");
-			return null;
-		}
-
-		return Request.createClassifyOperation(wine, stars);
-	}
-
-	private Request createWalletRequest(String[] tokens) {
-		if (tokens.length != 1) {
-			System.out.println("Utilização: wallet");
-			return null;
-		}
-
-		return Request.createWalletOperation();
-	}
-
-	private Request createBuyRequest(String[] tokens) {
-		if (tokens.length != 4) {
-			System.out.println("Utilização: buy <wine> <seller> <quantity>");
-			return null;
-		}
-		String wine = tokens[1];
-		String seller = tokens[2];
-		int quantity;
-		try {
-			quantity = Integer.parseInt(tokens[3]);
-		} catch (Exception e) {
-			System.out.println("Quantity têm que ser inteiros");
-			return null;
-		}
-
-		return Request.createBuyOperation(wine, seller, quantity);
-	}
-
-	private Request createViewRequest(String[] tokens) {
-		if (tokens.length != 2) {
-			System.out.println("Utilização: view <wine>");
-			return null;
-		}
-		String wine = tokens[1];
-		return Request.createViewOperation(wine);
-	}
-
-	private Request createAddRequest(String[] tokens) {
-		if (tokens.length != 3) {
-			System.out.println("Utilização: add <wine> <image>");
-			return null;
-		}
-		String wine = tokens[1];
-		String image = tokens[2];
-		return Request.createAddOperation(wine, image);
-	}
-
-	private Request createSellRequest(String[] tokens) {
-		if (tokens.length != 4) {
-			System.out.println("Utilização: sell <wine> <value> <quantity>");
-			return null;
-		}
-		String wine = tokens[1];
-		int value;
-		int quantity;
-		try {
-			value = Integer.parseInt(tokens[2]);
-			quantity = Integer.parseInt(tokens[3]);
-		} catch (Exception e) {
-			System.out.println("Value e quantity têm que ser inteiros");
-			return null;
-		}
-
-		return Request.createSellOperation(wine, value, quantity);
-	}
+	/*
+	 * private Request createReadRequest(String[] tokens) {
+	 * if (tokens.length != 1) {
+	 * System.out.println("Utilização: read");
+	 * return null;
+	 * }
+	 * return Request.createReadOperation();
+	 * }
+	 *
+	 * private Request createTalkRequest(String[] tokens) {
+	 * if (tokens.length < 3) {
+	 * System.out.println("Utilização: talk <user> <message>");
+	 * return null;
+	 * }
+	 * String user = tokens[1];
+	 * String message = "";
+	 * for (int i = 2; i < tokens.length; i++) {
+	 * message += " " + tokens[i];
+	 * }
+	 * return Request.createTalkOperation(user, message.trim());
+	 * }
+	 *
+	 * private Request createClassifyRequest(String[] tokens) {
+	 * if (tokens.length != 3) {
+	 * System.out.println("Utilização: classify <wine> <stars>");
+	 * return null;
+	 * }
+	 * String wine = tokens[1];
+	 * int stars;
+	 * try {
+	 * stars = Integer.parseInt(tokens[2]);
+	 * } catch (Exception e) {
+	 * System.out.println("Stars têm que ser inteiros");
+	 * return null;
+	 * }
+	 *
+	 * return Request.createClassifyOperation(wine, stars);
+	 * }
+	 *
+	 * private Request createWalletRequest(String[] tokens) {
+	 * if (tokens.length != 1) {
+	 * System.out.println("Utilização: wallet");
+	 * return null;
+	 * }
+	 *
+	 * return Request.createWalletOperation();
+	 * }
+	 *
+	 * private Request createBuyRequest(String[] tokens) {
+	 * if (tokens.length != 4) {
+	 * System.out.println("Utilização: buy <wine> <seller> <quantity>");
+	 * return null;
+	 * }
+	 * String wine = tokens[1];
+	 * String seller = tokens[2];
+	 * int quantity;
+	 * try {
+	 * quantity = Integer.parseInt(tokens[3]);
+	 * } catch (Exception e) {
+	 * System.out.println("Quantity têm que ser inteiros");
+	 * return null;
+	 * }
+	 *
+	 * return Request.createBuyOperation(wine, seller, quantity);
+	 * }
+	 *
+	 * private Request createViewRequest(String[] tokens) {
+	 * if (tokens.length != 2) {
+	 * System.out.println("Utilização: view <wine>");
+	 * return null;
+	 * }
+	 * String wine = tokens[1];
+	 * return Request.createViewOperation(wine);
+	 * }
+	 *
+	 * private Request createAddRequest(String[] tokens) {
+	 * if (tokens.length != 3) {
+	 * System.out.println("Utilização: add <wine> <image>");
+	 * return null;
+	 * }
+	 * String wine = tokens[1];
+	 * String image = tokens[2];
+	 * // Check if image exists
+	 * try {
+	 * bfimage = WineImage.readImageFromDisk(WineImage.getImagePath(image));
+	 * } catch (IOException e) {
+	 * System.out.println("imagem nao existe");
+	 * return null;
+	 * }
+	 * try {
+	 * return Request.createAddOperation(wine, image);
+	 * } catch (IOException e) {
+	 * e.printStackTrace();
+	 * }
+	 * return null;
+	 * }
+	 *
+	 * private Request createSellRequest(String[] tokens) {
+	 * if (tokens.length != 4) {
+	 * System.out.println("Utilização: sell <wine> <value> <quantity>");
+	 * return null;
+	 * }
+	 * String wine = tokens[1];
+	 * int value;
+	 * int quantity;
+	 * try {
+	 * value = Integer.parseInt(tokens[2]);
+	 * quantity = Integer.parseInt(tokens[3]);
+	 * } catch (Exception e) {
+	 * System.out.println("Value e quantity têm que ser inteiros");
+	 * return null;
+	 * }
+	 *
+	 * return Request.createSellOperation(wine, value, quantity);
+	 * }
+	 */
 
 	private static void menu() {
 		System.out.println("### MENU ###");
@@ -341,6 +391,7 @@ public class Tintolmarket implements Serializable {
 	private void disconnectFromServer() {
 		try {
 			clientSocket.close();
+			System.exit(1);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -348,5 +399,15 @@ public class Tintolmarket implements Serializable {
 
 	private void close() {
 
+	}
+
+	public static Boolean createFolder(String name) {
+		// Create a folder for the images
+		File folder = new File(name);
+		if (!folder.exists()) {
+			folder.mkdir();
+			System.out.println("Created folder: " + name);
+		}
+		return folder.exists();
 	}
 }
