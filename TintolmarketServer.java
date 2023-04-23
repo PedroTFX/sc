@@ -293,45 +293,35 @@ public class TintolmarketServer implements Serializable {
 				Request.BuyWine requestBuyWine = (Request.BuyWine) payload;
 				return api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller, threadUserID);
 			} else if (type == Request.Type.WALLET) {
-				  Response response = null;
-				  User user = api.getUser(threadUserID);
-				  if (user == null) {
+				Response response = null;
+				User user = api.getUser(threadUserID);
+				if (user == null) {
 					response = new Response(Response.Type.ERROR,
-					new Response.Error("Erro a obter saldo. user nao existe"));
-				  } else {
+							new Response.Error("Erro a obter saldo. user nao existe"));
+				} else {
 					response = new Response(Response.Type.OK,
-					new Response.OK("Saldo obtido com sucesso: " + user.balance));
+							new Response.OK("Saldo obtido com sucesso: " + user.balance));
 					System.out.println("saldo: " + (user.balance) + " user: " + threadUserID);
-				  }
-				  return response;
+				}
+				return response;
 			} else if (type == Request.Type.CLASSIFY) {
 				Request.ClassifyWine classifyWine = (Request.ClassifyWine) request.payload;
 
 				if (classifyWine.stars < 1 || classifyWine.stars > 5) {
-					return new Response(Response.Type.ERROR, new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
+					return new Response(Response.Type.ERROR,
+							new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
 				}
 
 				return api.classifyWine(classifyWine.name, classifyWine.stars);
 
 			} else if (type == Request.Type.TALK) {
 				Request.Talk talk = (Request.Talk) request.payload;
-				return api.talk(talk.user, talk.message, threadUserID);
-			}
+				return api.talk(talk.user, talk.message, threadUserID, talk.encryptedKey);
+			} else if (type == Request.Type.READ) {
+				return api.read(threadUserID);
+			} else if (type == Request.Type.TRANSACTIONS) {
 
-				  /*} else if (type == Request.Type.READ) {
-				 * response.messages = Logic.getMessages(userId);
-				 *
-				 * if (response.messages.size() > 0) {
-				 * response.type = Response.Type.READ;
-				 * } else {
-				 * response.type = Response.Type.ERROR;
-				 * response.message = "nao tens nada para ler";
-				 * }
-				 *
-				 * } else if (type == Request.Type.READ) {
-				 *
-				 * }
-				 */
+			}
 
 			return new Response(Response.Type.ERROR, new Response.Error("UNIMPLEMENTED"));
 		}

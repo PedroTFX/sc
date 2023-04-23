@@ -4,22 +4,26 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Scanner;
 
 import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
+//TODO QUANDO ENVIO UMA MENSSAGEM PARA MIM MESMO CORRE BEM MAS SE FOR PARA OUTRO DA ERRO. WTF???
+//TODO ADICIONAR SYSTEM TIME MILIS PARA AS IMAGENS SEREM UNICAS OU FAZER UMA PASTA PARA CADA CLIENTE
 public class Tintolmarket implements Serializable {
-	private PrivateKey privateKey = null;
+	//private PrivateKey privateKey = null;
 	private static Scanner sc = new Scanner(System.in);
 	private SSLSocket clientSocket = null;
 	//private SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -28,6 +32,9 @@ public class Tintolmarket implements Serializable {
 	private ObjectOutputStream out = null;
 	private boolean close = false;
 	private String trustStore = null;
+	private String keystore = null;
+	private String userId = null;
+	private SecretKey secretKey = null;
 	//private BufferedImage bfimage = null;
 
 	public static void main(String[] args) throws Exception {
@@ -56,18 +63,28 @@ public class Tintolmarket implements Serializable {
 	private Tintolmarket(String host, int port, String trustStore, String keyStore, String keyStorePassword, String userId) throws Exception {
 
 		this.trustStore = trustStore;
-
-		privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
+		this.userId = userId;
+		this.keystore = keyStore;
+		//privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 
 		initializeServerConnection(host, port, trustStore);
 
 		new Authentication(keyStore, keyStorePassword, userId);
+
+		secretKey = generateSecretKey();
 
 		run();
 
 		disconnectFromServer();
 
 		close();
+	}
+
+	private SecretKey generateSecretKey() throws NoSuchAlgorithmException {
+		KeyGenerator kg = KeyGenerator.getInstance("AES");
+		kg.init(128);
+		//SecretKey key = kg.generateKey();
+		return kg.generateKey();
 	}
 
 	private void initializeServerConnection(String host, int port, String trustStoreFilename) {
@@ -179,6 +196,22 @@ public class Tintolmarket implements Serializable {
 						System.out.println(String.format("%s is selling %d bottles of %s at %d€.", listing.seller, listing.quantity, listing.name, listing.price));
 					}
 
+				} else if(response.type == Response.Type.READ){
+					PrivateKey privateKey = SecurityRSA.getPrivateKey(keystore, "password", userId);
+					Response.ReadMessages responseMessages = (Response.ReadMessages)response.payload;
+					ArrayList<String> messages = responseMessages.messages;
+					/* String secretKeyString = null;
+					if (messages.size() > 0) {
+						secretKeyString = messages.get(0).split(":")[3];
+					} */
+					for (int i = 0; i < messages.size(); i++) {
+						String[] messageTokens = messages.get(i).split(":");
+						String secretKeyString = messages.get(i).split(":")[3];
+						//Key decryptedSecretKey = SecurityRSA.unwrapKey(messageTokens[3].getBytes(), privateKey);
+						Key decryptedSecretKey = SecurityRSA.decryptAesKey(Base64.getDecoder().decode(secretKeyString)/* messageTokens[3].getBytes() */, privateKey);
+
+						System.out.println(String.format("%s recebeu a seguinte mensagem de %s: %s", userId, messageTokens[1], SecurityRSA.decrypt(Base64.getDecoder().decode(messageTokens[2])/* .getBytes() */, decryptedSecretKey)));
+					}
 				}
 			} catch (Exception e2) {
 				close = true;
@@ -274,15 +307,23 @@ public class Tintolmarket implements Serializable {
 			String completeMessage = messageBuilder.toString().trim();
 
 			String encryptedMessage = null;
+
+			byte[] wrapedAESKey = null;
 			try {
-				encryptedMessage = SecurityRSA.encryptMessage(publicKey, completeMessage);
-			} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+				//encryptedMessage = SecurityRSA.encryptAES128(completeMessage, Base64.getEncoder().encodeToString(secretKey.getEncoded()));
+				encryptedMessage = Base64.getEncoder().encodeToString(SecurityRSA.encryptData(completeMessage, secretKey));
+
+				//wrapedAESKey = SecurityRSA.wrapKey(secretKey, publicKey);
+				wrapedAESKey = SecurityRSA.encryptAesKey(secretKey, publicKey);
+				//SecurityRSA.encryptMessage(publicKey, completeMessage);
+			} catch (InvalidKeyException | IllegalBlockSizeException | NoSuchAlgorithmException | NoSuchPaddingException e) {
 				System.out.println("Erro a cifrar mensagem");
 				// e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			return new Request(Request.Type.TALK, new Request.Talk(tokens[1], encryptedMessage));
+			return new Request(Request.Type.TALK, new Request.Talk(tokens[1], encryptedMessage, wrapedAESKey));
 		} else if (operation.equals("read") || operation.equals("r")) {
-
 			return new Request(Request.Type.READ, null);
 		} else if(operation.equals("list") || operation.equals("l")){
 			return new Request(Request.Type.LISTWINE, null);
