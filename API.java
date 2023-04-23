@@ -1,5 +1,7 @@
 import java.security.PublicKey;
 import java.util.ArrayList;
+//import java.util.Hashtable;
+import java.util.Base64;
 
 public class API {
 	private DB db = null;
@@ -203,7 +205,9 @@ public class API {
 		return message.replace("\\:", ":");
 	}
 
-	public Response talk(String recipient, String message, String sender) throws Exception {
+	public Response talk(String recipient, String message, String sender, byte[] secretKey) throws Exception {
+
+		String secretKeyString = Base64.getEncoder().encodeToString(secretKey);
 
 		String recipientInfo = db.user.get(recipient);
 
@@ -211,10 +215,16 @@ public class API {
 			return new Response(Response.Type.ERROR, new Response.Error("Recetor nao existe"));
 		}
 
-		String newRow = String.format("%s:%s:%s", recipient, sender, message);
+		String newRow = String.format("%s:%s:%s:%s", recipient, sender, message, secretKeyString);
 
 		db.message.add(newRow);
 
 		return new Response(Response.Type.OK, new Response.OK("Mensagem enviada com sucesso"));
+	}
+
+	public Response read(String recipient) throws Exception {
+		ArrayList<String> messages = db.message.getAll(recipient);
+
+		return new Response(Response.Type.READ, new Response.ReadMessages(messages));
 	}
 }
