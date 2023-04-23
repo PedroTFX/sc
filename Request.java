@@ -106,10 +106,11 @@ public class Request implements Serializable {
 	static class Talk implements Serializable{
 		String user;
 		String message;
-
-		Talk(String user, String message) {
+		byte[] encryptedKey;
+		Talk(String user, String message, byte[] encryptedKey) {
 			this.user = user;
 			this.message = message;
+			this.encryptedKey = encryptedKey;
 		}
 	}
 
