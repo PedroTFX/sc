@@ -268,6 +268,7 @@ public class Tintolmarket implements Serializable {
 		} else if (operation.equals("buy") || operation.equals("b")) {
 			if (tokens.length != 4) {
 				System.out.println("Usage: buy <wine> <seller> <quantity>");
+				return null;
 			}
 
 			String wineName = tokens[1];
