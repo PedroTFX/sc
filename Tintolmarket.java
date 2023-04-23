@@ -20,7 +20,6 @@ import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-//TODO QUANDO ENVIO UMA MENSSAGEM PARA MIM MESMO CORRE BEM MAS SE FOR PARA OUTRO DA ERRO. WTF???
 //TODO ADICIONAR SYSTEM TIME MILIS PARA AS IMAGENS SEREM UNICAS OU FAZER UMA PASTA PARA CADA CLIENTE
 public class Tintolmarket implements Serializable {
 	//private PrivateKey privateKey = null;
