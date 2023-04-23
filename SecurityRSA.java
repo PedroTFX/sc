@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -17,6 +18,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class SecurityRSA {
@@ -72,26 +74,30 @@ public class SecurityRSA {
 
 	public static String encryptAES128(String line, String passwordCifra) throws RuntimeException {
 		try {
-			//SecretKeySpec secretKey = new SecretKeySpec("yomamakeydeusman".getBytes(), "AES");
+			// SecretKeySpec secretKey = new SecretKeySpec("yomamakeydeusman".getBytes(),
+			// "AES");
 			SecretKeySpec secretKey = new SecretKeySpec(passwordCifra.getBytes(), "AES");
 			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 			byte[] encryptedBytes = cipher.doFinal(line.getBytes(StandardCharsets.UTF_8));
 			return Base64.getEncoder().encodeToString(encryptedBytes);
 		} catch (Exception e) {
-			throw new RuntimeException("Error while encrypting line", e);
+			e.printStackTrace();
+			return null;
+			//throw new RuntimeException("Error while encrypting line", e);
 		}
 	}
 
 	public static String decryptAES128(String encryptedLine, String passwordCifra) throws RuntimeException {
 		try {
 			SecretKeySpec secretKey = new SecretKeySpec(passwordCifra.getBytes(), "AES");
-			//SecretKeySpec secretKey = new SecretKeySpec("yomamakeydeusman".getBytes(), "AES");
+			// SecretKeySpec secretKey = new SecretKeySpec("yomamakeydeusman".getBytes(),
+			// "AES");
 			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, secretKey);
 			byte[] decodedBytes = Base64.getDecoder().decode(encryptedLine);
 			byte[] decryptedBytes = cipher.doFinal(decodedBytes);
-			//return encryptedLine;
+			// return encryptedLine;
 			return new String(decryptedBytes, StandardCharsets.UTF_8);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while decrypting line", e);
@@ -125,10 +131,44 @@ public class SecurityRSA {
 		return signature.verify(maybeSigned);
 	}
 
-	public static String encryptMessage(PublicKey publicKey, String encryptedMessage) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+	public static String encryptMessage(PublicKey publicKey, String messageToEncrypt) throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
 		Cipher cipher = Cipher.getInstance("RSA");
 		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-		byte[] encryptedMessageBytes = cipher.doFinal(encryptedMessage.getBytes(StandardCharsets.UTF_8));
+		byte[] messageToEncryptBytes = cipher.doFinal(messageToEncrypt.getBytes(StandardCharsets.UTF_8));
+		return Base64.getEncoder().encodeToString(messageToEncryptBytes);
+	}
+
+	public static String decryptMessage(byte[] encryptedMessage, PrivateKey privateKey) throws InvalidKeyException,
+			NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.DECRYPT_MODE, privateKey);
+		byte[] encryptedMessageBytes = cipher.doFinal(encryptedMessage);
 		return Base64.getEncoder().encodeToString(encryptedMessageBytes);
+	}
+
+	public static byte[] encryptAesKey(SecretKey aesKey, PublicKey publicKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.WRAP_MODE, publicKey);
+		return cipher.wrap(aesKey);
+	}
+
+	public static SecretKey decryptAesKey(byte[] encryptedAesKey, PrivateKey privateKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.UNWRAP_MODE, privateKey);
+		return (SecretKey) cipher.unwrap(encryptedAesKey, "AES", Cipher.SECRET_KEY);
+	}
+
+	public static String decrypt(byte[] encryptedData, Key aesKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, aesKey);
+		byte[] decryptedData = cipher.doFinal(encryptedData);
+		return new String(decryptedData, StandardCharsets.UTF_8);
+	}
+
+	public static byte[] encryptData(String input, SecretKey aesKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("AES");
+		cipher.init(Cipher.ENCRYPT_MODE, aesKey);
+		return cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
 	}
 }
