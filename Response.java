@@ -1,6 +1,5 @@
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Hashtable;
 
 public class Response implements Serializable {
 	enum Type {
@@ -48,9 +47,8 @@ public class Response implements Serializable {
 	}
 
 	static class ReadMessages implements Serializable {
-		Hashtable<String, ArrayList<String>> messages;
-
-		ReadMessages(Hashtable<String, ArrayList<String>> messages) {
+		ArrayList<String> messages;
+		ReadMessages(ArrayList<String> messages){
 			this.messages = messages;
 		}
 	}
