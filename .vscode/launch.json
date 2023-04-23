@@ -23,7 +23,7 @@
 			"type": "java",
 			"request": "launch",
 			"mainClass": "TintolmarketServer",
-			"args": "12345 yamamakeydeusman ./certs/keystore.server password"
+			"args": "12345 joaojoaojoaojoao ./certs/keystore.server password"
 		}
 	]
 }
