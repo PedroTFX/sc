@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Random;
 
@@ -17,8 +18,7 @@ public class TintolmarketServer implements Serializable {
 
 	public static void main(String[] args) {
 		if (args.length != 3 && args.length != 4) {
-			System.out.println(
-					"Usage: java TintolmarketServer [port] <databasePassword> <keystoreFilename> <keystorePassword>");
+			System.out.println("Usage: java TintolmarketServer [port] <databasePassword> <keystoreFilename> <keystorePassword>");
 			return;
 		}
 
@@ -27,6 +27,7 @@ public class TintolmarketServer implements Serializable {
 		if (args.length == 4) {
 			port = Integer.parseInt(args[index++]);
 		}
+
 		String passwordCifra = args[index++];
 		String keystore = args[index++];
 		String keystorePassword = args[index];
@@ -37,6 +38,15 @@ public class TintolmarketServer implements Serializable {
 	TintolmarketServer(int port, String passwordCifra, String keystoreFilename, String keystorePassword) {
 		// Initialize API
 		api = new API(passwordCifra);
+
+		try {
+			System.out.println(Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH)));
+			System.out.println(Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH)));
+			System.out.println(Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH)));
+			System.out.println(Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH)));
+		} catch (NoSuchAlgorithmException | IOException e) {
+			e.printStackTrace();
+		}
 
 		// Initialize server
 		startServer(port, keystoreFilename, keystorePassword);
@@ -89,9 +99,32 @@ public class TintolmarketServer implements Serializable {
 			// Initialization
 			initConnectionStreams();
 
+			boolean clean = false;
+
+			try {
+				clean = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+				if(!clean){
+					System.out.println("Ficheiro socratizado. A fechar thread");
+					close = true;
+					//return;
+				} else {
+					System.out.println("Auth: ficheiro dos users verificado e esta bom");
+				}
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			// Authentication
 			new Authentication();
 
+			try {
+				Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			// Listen to requests
 			listen();
 
