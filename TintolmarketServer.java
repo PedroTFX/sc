@@ -295,63 +295,162 @@ public class TintolmarketServer implements Serializable {
 			if (type == Request.Type.ADDWINE) {
 				Request.AddWine requestAddWine = (Request.AddWine) payload;
 
-				if (api.addWine(requestAddWine.wine) == null) {
-					return new Response(Response.Type.ERROR, new Response.Error("Esse vinho já existe!"));
-				}
+				boolean winesIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+				System.out.println("A verificar a integridade do ficheiro dos vinhos antes do pedido add: " + winesIntegrity);
 
-				return new Response(Response.Type.OK, new Response.OK("Vinho adicionado com sucesso"));
+				if (!winesIntegrity) {
+
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else{
+
+					if (api.addWine(requestAddWine.wine) == null) {
+						return new Response(Response.Type.ERROR, new Response.Error("Esse vinho já existe!"));
+					}
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+					System.out.println("Hash atualizado nos vinhos");
+
+					return new Response(Response.Type.OK, new Response.OK("Vinho adicionado com sucesso"));
+				}
 			} else if (type == Request.Type.LISTWINE) {
 				Request.ListWine requestListWine = (Request.ListWine) payload;
 
-				if (api.listWine(threadUserID, requestListWine.name,
-						requestListWine.quantity, requestListWine.price) == false) {
-					return new Response(Response.Type.ERROR,
-							new Response.Error("Esse vinho não existe. Crie-o primeiro."));
-				}
+				boolean ListIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+				System.out.println("A verificar a integridade do ficheiro das vendas antes do pedido listWine: " + ListIntegrity);
 
-				return new Response(Response.Type.OK, new Response.OK("Vinho colocado à venda com sucesso!"));
+				if (!ListIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else {
+
+					if (api.listWine(threadUserID, requestListWine.name, requestListWine.quantity, requestListWine.price) == false) {
+						return new Response(Response.Type.ERROR, new Response.Error("Esse vinho não existe. Crie-o primeiro."));
+					}
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+					System.out.println("Hash atualizado nas vendas");
+					return new Response(Response.Type.OK, new Response.OK("Vinho colocado à venda com sucesso!"));
+				}
 			} else if (type == Request.Type.VIEWWINE) {
 				Request.ViewWine requestViewWine = (Request.ViewWine) payload;
 
-				ViewWine viewWine = api.getWine(requestViewWine.name);
-				if (viewWine == null) {
-					return new Response(Response.Type.ERROR,
-							new Response.Error("Esse vinho não existe."));
-				}
+				boolean winesIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+				System.out.println("A verificar a integridade do ficheiro dos vinhos antes do pedido view: " + winesIntegrity);
+				boolean ListIntegrity = Integrity.verifyIntegrity( Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+				System.out.println("A verificar a integridade do ficheiro das vendas antes do pedido listWine: " + ListIntegrity);
 
-				return new Response(Response.Type.VIEWWINE,
-						new Response.ViewWineAndListings(viewWine.wine, viewWine.listings));
 
-			} else if (type == Request.Type.BUYWINE) {
-				Request.BuyWine requestBuyWine = (Request.BuyWine) payload;
-				return api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller, threadUserID);
-			} else if (type == Request.Type.WALLET) {
-				Response response = null;
-				User user = api.getUser(threadUserID);
-				if (user == null) {
-					response = new Response(Response.Type.ERROR,
-							new Response.Error("Erro a obter saldo. user nao existe"));
+				if (!winesIntegrity || !ListIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
 				} else {
-					response = new Response(Response.Type.OK,
-							new Response.OK("Saldo obtido com sucesso: " + user.balance));
-					System.out.println("saldo: " + (user.balance) + " user: " + threadUserID);
+
+					ViewWine viewWine = api.getWine(requestViewWine.name);
+					if (viewWine == null) {
+						return new Response(Response.Type.ERROR, new Response.Error("Esse vinho não existe."));
+					}
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+					System.out.println("Hash atualizado nos vinhos");
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+					System.out.println("Hash atualizado nas vendas");
+
+					return new Response(Response.Type.VIEWWINE, new Response.ViewWineAndListings(viewWine.wine, viewWine.listings));
 				}
-				return response;
+			} else if (type == Request.Type.BUYWINE) {
+				Response response = null;
+				Request.BuyWine requestBuyWine = (Request.BuyWine) payload;
+
+				boolean userIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+				boolean listIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+
+				if (!userIntegrity || !wineIntegrity || !listIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else {
+
+					response = api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller, threadUserID);
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+					System.out.println("Hash atualizado nos users");
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+					System.out.println("Hash atualizado nos vinhos");
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+					System.out.println("Hash atualizado nas vendas");
+
+					return response;
+				}
+			} else if (type == Request.Type.WALLET) {
+
+				boolean userIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+
+				if (!userIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else {
+
+					Response response = null;
+					User user = api.getUser(threadUserID);
+					if (user == null) {
+						response = new Response(Response.Type.ERROR, new Response.Error("Erro a obter saldo. user nao existe"));
+					} else {
+						response = new Response(Response.Type.OK, new Response.OK("Saldo obtido com sucesso: " + user.balance));
+						System.out.println("saldo: " + (user.balance) + " user: " + threadUserID);
+					}
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+					System.out.println("Hash atualizado nos users");
+					return response;
+				}
 			} else if (type == Request.Type.CLASSIFY) {
 				Request.ClassifyWine classifyWine = (Request.ClassifyWine) request.payload;
 
-				if (classifyWine.stars < 1 || classifyWine.stars > 5) {
-					return new Response(Response.Type.ERROR,
-							new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
-				}
+				Response response = null;
+				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
 
-				return api.classifyWine(classifyWine.name, classifyWine.stars);
+				if (!wineIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else {
+
+					if (classifyWine.stars < 1 || classifyWine.stars > 5) {
+						return new Response(Response.Type.ERROR,
+						new Response.Error("classificacao invalida. tem de ser entre 1 e 5"));
+					}
+
+					response = api.classifyWine(classifyWine.name, classifyWine.stars);
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+					System.out.println("Hash atualizado nos vinhos");
+
+					return response;
+				}
 
 			} else if (type == Request.Type.TALK) {
 				Request.Talk talk = (Request.Talk) request.payload;
-				return api.talk(talk.user, talk.message, threadUserID, talk.encryptedKey);
+
+				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
+
+				if (!wineIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else {
+
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
+					System.out.println("Hash atualizado nas mensagens");
+
+					return api.talk(talk.user, talk.message, threadUserID, talk.encryptedKey);
+				}
 			} else if (type == Request.Type.READ) {
-				return api.read(threadUserID);
+
+				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.MESSAGE_FILE),
+						"SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
+
+				if (!wineIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+				} else {
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
+					System.out.println("Hash atualizado nas mensagens");
+					return api.read(threadUserID);
+				}
+
 			} else if (type == Request.Type.TRANSACTIONS) {
 
 			}
