@@ -11,8 +11,6 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Scanner;
-
-import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
@@ -342,6 +340,7 @@ public class Tintolmarket implements Serializable {
 		System.out.println("classify <wine> <stars>");
 		System.out.println("talk <user> <message>");
 		System.out.println("read");
+		System.out.println("list");
 		System.out.print("Opcão: ");
 	}
 
