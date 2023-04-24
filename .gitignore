@@ -22,3 +22,7 @@ infos/
 lixo/
 certsExemplo/
 certificados/
+hash/messages.hash
+hash/users.hash
+hash/wine_listings.hash
+hash/wines.hash
