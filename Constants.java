@@ -4,6 +4,7 @@ public class Constants {
 	public static final String SERVER_IMAGES_FOLDER = "server-images\\";
 	public static final String CLIENT_IMAGES_FOLDER = "client-images\\";
 
+	public static final String BLOCKCHAIN_FOLDER = "blockchain\\";
 
 	public static final String USER_HASH = HASH_FOLDER + "\\" + "users.hash";
 	public static final String WINE_HASH = HASH_FOLDER + "\\" + "wines.hash";
@@ -17,4 +18,5 @@ public class Constants {
 
 	public static final int STARTING_BALANCE = 200;
 
+	public static final String TRUSTSTORE_PASSWORD = "password";
 }

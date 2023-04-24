@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-
 public class DB {
 	public Table user = null;
 	public Table wine = null;
@@ -53,6 +52,14 @@ public class DB {
 				System.out.println("Images folder was already created ✅");
 			}
 
+			File blockchainFolder = new File(Constants.BLOCKCHAIN_FOLDER);
+			if (!blockchainFolder.exists()) {
+				blockchainFolder.mkdir();
+				System.out.println("Blockchain folder created ✅");
+			} else {
+				System.out.println("Blockchain folder was already created ✅");
+			}
+
 			// Create files
 			Boolean usersFileCreated = new File(Constants.USER_FILE).createNewFile();
 			Boolean winesFileCreated = new File(Constants.WINE_FILE).createNewFile();
@@ -68,14 +75,17 @@ public class DB {
 			String usersFileCreatedString = usersFileCreated ? "Users file created ✅" : "Users file not created ❌";
 			String winesFileCreatedString = winesFileCreated ? "Wines file created ✅" : "Wines file not created ❌";
 			String sellsFileCreatedString = sellsFileCreated ? "Sales file created ✅" : "Sales file not created ❌";
-			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅" : "Messages file not created ❌";
+			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅"
+					: "Messages file not created ❌";
 
 			String usersHashCreatedString = usersHashCreated ? "Users Hash created ✅" : "Users Hash not created ❌";
 			String winesHashCreatedString = winesHashCreated ? "Wines Hash created ✅" : "Wines Hash not created ❌";
 			String sellsHashCreatedString = sellsHashCreated ? "Sales Hash created ✅" : "Sales Hash not created ❌";
-			String messagesHashCreatedString = messagesHashCreated ? "Messages Hash created ✅" : "Messages Hash not created ❌";
+			String messagesHashCreatedString = messagesHashCreated ? "Messages Hash created ✅"
+					: "Messages Hash not created ❌";
 			if (usersFileCreated && winesFileCreated && sellsFileCreated
-					&& messagesFileCreated && usersHashCreated && winesHashCreated && sellsHashCreated && messagesHashCreated) {
+					&& messagesFileCreated && usersHashCreated && winesHashCreated && sellsHashCreated
+					&& messagesHashCreated) {
 				System.out.println(String.format("%s", usersFileCreatedString));
 				System.out.println(String.format("%s", winesFileCreatedString));
 				System.out.println(String.format("%s", sellsFileCreatedString));
@@ -173,7 +183,8 @@ public class DB {
 			ArrayList<String> fileContent = new ArrayList<String>(Files.readAllLines(Path.of(file)));
 			String newRow = cipher == null ? row : SecurityRSA.encryptAES128(row, cipher);
 			for (int i = 0; i < fileContent.size(); i++) {
-				String currentLine = cipher == null ? fileContent.get(i) : SecurityRSA.decryptAES128(fileContent.get(i), cipher);
+				String currentLine = cipher == null ? fileContent.get(i)
+						: SecurityRSA.decryptAES128(fileContent.get(i), cipher);
 				if (currentLine.startsWith(id + ":")) {
 					fileContent.set(i, newRow);
 					break;

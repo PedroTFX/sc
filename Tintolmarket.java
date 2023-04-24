@@ -11,6 +11,8 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Scanner;
+import java.util.UUID;
+
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
@@ -29,10 +31,10 @@ public class Tintolmarket implements Serializable {
 	private ObjectOutputStream out = null;
 	private boolean close = false;
 	private String trustStore = null;
-	private String keystore = null;
+	private String keyStore = null;
+	private String keyStorePassword = null;
 	private String userId = null;
 	private SecretKey secretKey = null;
-	//private BufferedImage bfimage = null;
 
 	public static void main(String[] args) throws Exception {
 		// Verificar se temos pelo menos 2 argumentos
@@ -58,15 +60,15 @@ public class Tintolmarket implements Serializable {
 	}
 
 	private Tintolmarket(String host, int port, String trustStore, String keyStore, String keyStorePassword, String userId) throws Exception {
-
 		this.trustStore = trustStore;
 		this.userId = userId;
-		this.keystore = keyStore;
+		this.keyStore = keyStore;
+		this.keyStorePassword = keyStorePassword;
 		//privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 
-		initializeServerConnection(host, port, trustStore);
+		initializeServerConnection(host, port);
 
-		new Authentication(keyStore, keyStorePassword, userId);
+		new Authentication();
 
 		secretKey = generateSecretKey();
 
@@ -84,10 +86,10 @@ public class Tintolmarket implements Serializable {
 		return kg.generateKey();
 	}
 
-	private void initializeServerConnection(String host, int port, String trustStoreFilename) {
+	private void initializeServerConnection(String host, int port) {
 		try {
-			System.setProperty("javax.net.ssl.trustStore", trustStoreFilename);
-			System.setProperty("javax.net.ssl.trustStorePassword", "password");
+			System.setProperty("javax.net.ssl.trustStore", trustStore);
+			System.setProperty("javax.net.ssl.trustStorePassword", Constants.TRUSTSTORE_PASSWORD);
 			/* SocketFactory sf = SSLSocketFactory.getDefault();
 			clientSocket = (SSLSocket) sf.createSocket(host, port); */
 			/* SSL*/SocketFactory sslSocketFactory = /* (SSLSocketFactory) */ SSLSocketFactory.getDefault();
@@ -100,10 +102,10 @@ public class Tintolmarket implements Serializable {
 	}
 
 	class Authentication {
-		Authentication(String keyStore, String keyStorePassword, String userID) {
+		Authentication() {
 			try {
 				// Send userID
-				sendAuthRequest(userID);
+				sendAuthRequest(userId);
 
 				// Receive response
 				Response response = (Response) in.readObject();
@@ -121,10 +123,10 @@ public class Tintolmarket implements Serializable {
 				boolean newUser = responseAuthNonce.newUser;
 
 				// If we're a new user, register, otherwise login
-				PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userID);
+				PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 				byte[] bytesLong = ByteUtils.longToBytes(nonce);
 				byte[] signedNonce = SecurityRSA.sign(bytesLong, privateKey);
-				PublicKey publicKey = SecurityRSA.getPublicKey(keyStore, keyStorePassword, userID);
+				PublicKey publicKey = SecurityRSA.getPublicKey(keyStore, keyStorePassword, userId);
 				Request request = newUser
 						? new Request(Request.Type.AUTHREGISTER, new Request.AuthRegister(nonce, signedNonce,
 								publicKey))
@@ -155,7 +157,7 @@ public class Tintolmarket implements Serializable {
 		}
 	}
 
-	private void run() throws IOException {
+	private void run() throws Exception {
 		while (!close) {
 
 			Request request;
@@ -194,7 +196,7 @@ public class Tintolmarket implements Serializable {
 					}
 
 				} else if(response.type == Response.Type.READ){
-					PrivateKey privateKey = SecurityRSA.getPrivateKey(keystore, "password", userId);
+					PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 					Response.ReadMessages responseMessages = (Response.ReadMessages)response.payload;
 					ArrayList<String> messages = responseMessages.messages;
 					/* String secretKeyString = null;
@@ -217,7 +219,7 @@ public class Tintolmarket implements Serializable {
 		}
 	}
 
-	private Request readRequest() throws IOException {
+	private Request readRequest() throws Exception {
 		String line = null;
 		try {
 			line = sc.nextLine();
@@ -255,7 +257,14 @@ public class Tintolmarket implements Serializable {
 			int value = Integer.parseInt(tokens[2]);
 			int quantity = Integer.parseInt(tokens[3]);
 
-			return new Request(Request.Type.LISTWINE, new Request.ListWine(wineName, value, quantity));
+			PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
+			int sizeOfInt = 4;
+			int numOfInts = 2;
+			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt * numOfInts];
+			byte[] signedTransaction = SecurityRSA.sign(bytesLong, privateKey);
+			String uuid = UUID.randomUUID().toString();
+			return new Request(Request.Type.LISTWINE, new Request.ListWine(uuid, wineName, value, quantity,
+					signedTransaction));
 		} else if (operation.equals("view") || operation.equals("v")) {
 			if(tokens.length != 2){
 				System.out.println("Usage: view <wine>");

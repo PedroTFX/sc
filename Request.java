@@ -62,14 +62,18 @@ public class Request implements Serializable {
 	}
 
 	static class ListWine implements Serializable {
+		String uuid;
 		String name;
 		int price;
 		int quantity;
+		byte[] signature;
 
-		ListWine(String name, int price, int quantity) {
+		ListWine(String uuid, String name, int price, int quantity, byte[] signature) {
+			this.uuid = uuid;
 			this.name = name;
 			this.price = price;
 			this.quantity = quantity;
+			this.signature = signature;
 		}
 	}
 

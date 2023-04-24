@@ -1,3 +1,4 @@
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 //import java.util.Hashtable;
@@ -5,10 +6,16 @@ import java.util.Base64;
 
 public class API {
 	private DB db = null;
+	private Blockchain bc = null;
 
-	public API(String cipher) {
+	public API(String cipher, PrivateKey privateKey) {
 		// this.cipher = cipher;
 		db = new DB(cipher);
+		try {
+			bc = new Blockchain(privateKey);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	// USER
@@ -60,7 +67,8 @@ public class API {
 	}
 
 	// Wine Listings
-	public boolean listWine(String userName, String wineName, int quantity, int price) throws Exception {
+	public boolean listWine(String userName, String uuid, String wineName, int quantity, int price,
+			byte[] signature) throws Exception {
 		// Verificar se este vinho existe
 		boolean wineNotExists = db.wine.get(wineName) == null;
 		if (wineNotExists) {
@@ -75,9 +83,12 @@ public class API {
 			String row = String.format("%s:%s:%d:%s", wineName, userName, quantity, price);
 			db.listing.update(id, row);
 		} else {
-			// Create
+			// Create (wine_listing.txt)
 			String row = String.format("%s:%s:%d:%s", wineName, userName, quantity, price);
 			db.listing.add(row);
+
+			// Create (blockchain)
+			bc.addNFT(userName, uuid, wineName, quantity, price, signature);
 		}
 		return true;
 	}
