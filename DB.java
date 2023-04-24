@@ -36,6 +36,15 @@ public class DB {
 				System.out.println("Base folder was already created ✅");
 			}
 
+			// Create base folder
+			File HashFolder = new File(Constants.HASH_FOLDER);
+			if (!HashFolder.exists()) {
+				HashFolder.mkdir();
+				System.out.println("Hash folder created ✅");
+			} else {
+				System.out.println("Hash folder was already created ✅");
+			}
+
 			File imagesFolder = new File(Constants.SERVER_IMAGES_FOLDER);
 			if (!imagesFolder.exists()) {
 				imagesFolder.mkdir();
@@ -50,17 +59,31 @@ public class DB {
 			Boolean sellsFileCreated = new File(Constants.WINE_LISTINGS_FILE).createNewFile();
 			Boolean messagesFileCreated = new File(Constants.MESSAGE_FILE).createNewFile();
 
+			Boolean usersHashCreated = new File(Constants.USER_HASH).createNewFile();
+			Boolean winesHashCreated = new File(Constants.WINE_HASH).createNewFile();
+			Boolean sellsHashCreated = new File(Constants.WINE_LISTINGS_HASH).createNewFile();
+			Boolean messagesHashCreated = new File(Constants.MESSAGE_HASH).createNewFile();
+
 			// Print results
 			String usersFileCreatedString = usersFileCreated ? "Users file created ✅" : "Users file not created ❌";
 			String winesFileCreatedString = winesFileCreated ? "Wines file created ✅" : "Wines file not created ❌";
 			String sellsFileCreatedString = sellsFileCreated ? "Sales file created ✅" : "Sales file not created ❌";
 			String messagesFileCreatedString = messagesFileCreated ? "Messages file created ✅" : "Messages file not created ❌";
+
+			String usersHashCreatedString = usersHashCreated ? "Users Hash created ✅" : "Users Hash not created ❌";
+			String winesHashCreatedString = winesHashCreated ? "Wines Hash created ✅" : "Wines Hash not created ❌";
+			String sellsHashCreatedString = sellsHashCreated ? "Sales Hash created ✅" : "Sales Hash not created ❌";
+			String messagesHashCreatedString = messagesHashCreated ? "Messages Hash created ✅" : "Messages Hash not created ❌";
 			if (usersFileCreated && winesFileCreated && sellsFileCreated
-					&& messagesFileCreated) {
+					&& messagesFileCreated && usersHashCreated && winesHashCreated && sellsHashCreated && messagesHashCreated) {
 				System.out.println(String.format("%s", usersFileCreatedString));
 				System.out.println(String.format("%s", winesFileCreatedString));
 				System.out.println(String.format("%s", sellsFileCreatedString));
 				System.out.println(String.format("%s", messagesFileCreatedString));
+				System.out.println(String.format("%s", usersHashCreatedString));
+				System.out.println(String.format("%s", winesHashCreatedString));
+				System.out.println(String.format("%s", sellsHashCreatedString));
+				System.out.println(String.format("%s", messagesHashCreatedString));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

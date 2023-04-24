@@ -11,8 +11,6 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Scanner;
-
-import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
@@ -20,7 +18,6 @@ import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-//TODO QUANDO ENVIO UMA MENSSAGEM PARA MIM MESMO CORRE BEM MAS SE FOR PARA OUTRO DA ERRO. WTF???
 //TODO ADICIONAR SYSTEM TIME MILIS PARA AS IMAGENS SEREM UNICAS OU FAZER UMA PASTA PARA CADA CLIENTE
 public class Tintolmarket implements Serializable {
 	//private PrivateKey privateKey = null;
@@ -268,6 +265,7 @@ public class Tintolmarket implements Serializable {
 		} else if (operation.equals("buy") || operation.equals("b")) {
 			if (tokens.length != 4) {
 				System.out.println("Usage: buy <wine> <seller> <quantity>");
+				return null;
 			}
 
 			String wineName = tokens[1];
@@ -342,6 +340,7 @@ public class Tintolmarket implements Serializable {
 		System.out.println("classify <wine> <stars>");
 		System.out.println("talk <user> <message>");
 		System.out.println("read");
+		System.out.println("list");
 		System.out.print("Opcão: ");
 	}
 
