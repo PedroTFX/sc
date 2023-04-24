@@ -75,7 +75,7 @@ public class TintolmarketServer implements Serializable {
 			/* SSL */ServerSocketFactory sslServerSocketFactory = /* (SSLServerSocketFactory) */ SSLServerSocketFactory
 					.getDefault();
 			sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(port);
-			System.out.println("Server started on port " + port + "...");
+			System.out.println("Server started on port porto " + port + "...");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -426,33 +426,38 @@ public class TintolmarketServer implements Serializable {
 
 			} else if (type == Request.Type.TALK) {
 				Request.Talk talk = (Request.Talk) request.payload;
-
+				Response response = null;
 				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
 
 				if (!wineIntegrity) {
 					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
 				} else {
 
+					response = api.talk(talk.user, talk.message, threadUserID, talk.encryptedKey);
+
 					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
 					System.out.println("Hash atualizado nas mensagens");
 
-					return api.talk(talk.user, talk.message, threadUserID, talk.encryptedKey);
+					return response;//api.talk(talk.user, talk.message, threadUserID, talk.encryptedKey);
 				}
 			} else if (type == Request.Type.READ) {
-
-				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.MESSAGE_FILE),
-						"SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
+				Response response = null;
+				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
 
 				if (!wineIntegrity) {
 					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
 				} else {
+
+					response = api.read(threadUserID);
+
 					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.MESSAGE_FILE), "SHA", Integrity.getAbsolutePath(Constants.MESSAGE_HASH));
 					System.out.println("Hash atualizado nas mensagens");
-					return api.read(threadUserID);
+
+					return response;//api.read(threadUserID);
 				}
 
 			} else if (type == Request.Type.TRANSACTIONS) {
-
+				return new Response(Response.Type.ERROR, new Response.Error("UNIMPLEMENTED"));
 			}
 
 			return new Response(Response.Type.ERROR, new Response.Error("UNIMPLEMENTED"));
