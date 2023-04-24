@@ -53,11 +53,11 @@ public class Blockchain {
 		return true;
 	}
 
-	private void createNextBlockFile() {
+	private void createNextBlockFile() throws IOException {
 		blockNumber++;
 		File blockFile = new File(getCurrentBlockFilename());
 		if (!blockFile.exists()) {
-			blockFile.mkdir();
+			blockFile.createNewFile();
 			System.out.println("Next block file created ✅");
 		}
 	}
