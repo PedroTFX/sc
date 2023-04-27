@@ -1,7 +1,6 @@
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
-//import java.util.Hashtable;
 import java.util.Base64;
 
 public class API {
@@ -11,6 +10,7 @@ public class API {
 	public API(String cipher, PrivateKey privateKey) {
 		// this.cipher = cipher;
 		db = new DB(cipher);
+		//long blockNumber = readBlockName();
 		try {
 			bc = new Blockchain(privateKey);
 		} catch (Exception e) {
@@ -67,8 +67,7 @@ public class API {
 	}
 
 	// Wine Listings
-	public boolean listWine(String userName, String uuid, String wineName, int quantity, int price,
-			byte[] signature) throws Exception {
+	public boolean listWine(String operation, String userName, String uuid, String wineName, int price, byte[] signature, byte[] transaction) throws Exception {
 		// Verificar se este vinho existe
 		boolean wineNotExists = db.wine.get(wineName) == null;
 		if (wineNotExists) {
@@ -80,16 +79,16 @@ public class API {
 		if (isSelling) {
 			// Update
 			String id = String.format("%s:%s", wineName, userName);
-			String row = String.format("%s:%s:%d:%s", wineName, userName, quantity, price);
+			String row = String.format("%s:%s:%d:%s", wineName, userName, price, price);
 			db.listing.update(id, row);
 		} else {
 			// Create (wine_listing.txt)
-			String row = String.format("%s:%s:%d:%s", wineName, userName, quantity, price);
+			String row = String.format("%s:%s:%d:%s", wineName, userName, price, price);
 			db.listing.add(row);
 
-			// Create (blockchain)
-			bc.addNFT(userName, uuid, wineName, quantity, price, signature);
 		}
+		// Create (blockchain)
+		bc.addNFT(operation, userName, uuid, wineName, price, price, signature, transaction);
 		return true;
 	}
 
@@ -158,7 +157,7 @@ public class API {
 		return new Response(Response.Type.OK, new Response.OK("Vinho classificado com sucesso"));
 	}
 
-	public Response buyWine(String name, int quantity, String seller, String buyer) throws Exception {
+	public Response buyWine(String name, int quantity, String seller, String buyer, String uuid, byte[] signature) throws Exception {
 		String[] buyerInfo = db.user.get(buyer).split(":");
 
 		// ver se o vinho existe
@@ -205,6 +204,9 @@ public class API {
 
 		db.user.update(seller, String.join(":", sellerInfo));
 		db.user.update(buyer, String.join(":", buyerInfo));
+
+		bc.buyNFT(name, uuid, name, quantity, price, signature);
+
 		return new Response(Response.Type.OK, new Response.OK("unidades compradas com sucesso"));
 	}
 

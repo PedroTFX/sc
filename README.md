@@ -67,3 +67,8 @@ perguntar sobre talk, sacamos a chave publica, ciframos e fazermos um pedido de 
 
 ver a chave publica do client da truststore
 fazer as coisas em cima do exemplo
+
+
+
+
+SEMPRE QUE INICIAR O SERVIDOR VERIFICAR OS BLOCOS A PARTI DO PRIMEiRO

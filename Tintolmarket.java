@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -21,6 +22,8 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 //TODO ADICIONAR SYSTEM TIME MILIS PARA AS IMAGENS SEREM UNICAS OU FAZER UMA PASTA PARA CADA CLIENTE
+// TODO verificar assinaturas de buy e sell, fazer list,
+
 public class Tintolmarket implements Serializable {
 	//private PrivateKey privateKey = null;
 	private static Scanner sc = new Scanner(System.in);
@@ -254,17 +257,32 @@ public class Tintolmarket implements Serializable {
 			}
 
 			String wineName = tokens[1];
-			int value = Integer.parseInt(tokens[2]);
+			int price = Integer.parseInt(tokens[2]);
 			int quantity = Integer.parseInt(tokens[3]);
 
 			PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 			int sizeOfInt = 4;
 			int numOfInts = 2;
 			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt * numOfInts];
-			byte[] signedTransaction = SecurityRSA.sign(bytesLong, privateKey);
-			String uuid = UUID.randomUUID().toString();
-			return new Request(Request.Type.LISTWINE, new Request.ListWine(uuid, wineName, value, quantity,
-					signedTransaction));
+			// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura>
+
+
+
+			//<userId>:<uuid>:<wineName>:<quantity>:<price>:<base64Signature>
+			ArrayList<String> nfts = new ArrayList<>();
+			ArrayList<String> signedNfts = new ArrayList<>();
+
+			String uuid = null;
+			for (int i = 0; i < quantity; i++) {
+				uuid = UUID.randomUUID().toString();
+				bytesLong = copyInfoToArrayList("sell", uuid, wineName, price, userId,  "sell".length() + uuid.length() + wineName.length() + sizeOfInt + userId.length());
+				nfts.add(Base64.getEncoder().encodeToString(bytesLong));
+				signedNfts.add( Base64.getEncoder().encodeToString(SecurityRSA.sign(bytesLong, privateKey)));
+			}
+
+
+
+			return new Request(Request.Type.LISTWINE, new Request.ListWine(uuid, wineName, price, quantity, signedNfts, nfts));
 		} else if (operation.equals("view") || operation.equals("v")) {
 			if(tokens.length != 2){
 				System.out.println("Usage: view <wine>");
@@ -281,7 +299,17 @@ public class Tintolmarket implements Serializable {
 			String seller = tokens[2];
 			int quantity = Integer.parseInt(tokens[3]);
 
-			return new Request(Request.Type.BUYWINE, new Request.BuyWine(wineName, seller, quantity));
+			PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
+			int sizeOfInt = 4;
+			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt];
+			//<userId>:<uuid>:<wineName>:<quantity>:<seller>:<base64Signature>
+			String uuid = UUID.randomUUID().toString();
+
+			bytesLong = copyInfoToArrayBuy(userId, uuid, wineName, quantity, userId.length() + wineName.length() + sizeOfInt);
+
+			byte[] signedTransaction = SecurityRSA.sign(bytesLong, privateKey);
+
+			return new Request(Request.Type.BUYWINE, new Request.BuyWine(uuid, wineName, seller, quantity, signedTransaction, bytesLong));
 		} else if (operation.equals("wallet") || operation.equals("w")) {
 			return new Request(Request.Type.WALLET, null);
 		} else if (operation.equals("classify") || operation.equals("c")) {
@@ -305,7 +333,6 @@ public class Tintolmarket implements Serializable {
 				//e.printStackTrace();
 				System.out.println("Nao foi possivel obter a chave publica");
 			}
-			//System.out.println(publicKey);
 			StringBuilder messageBuilder = new StringBuilder();
 			for (int i = 2; i < tokens.length; i++) {
 				messageBuilder.append(tokens[i] + " ");
@@ -337,6 +364,38 @@ public class Tintolmarket implements Serializable {
 		}
 
 		return null;
+	}
+
+	private byte[] copyInfoToArrayList(String operation, String uuid, String wineName, int price, String seller, int length) {
+		// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura>
+		byte[] bytesLong = new byte[length];
+		byte[] valueBytes = bigIntToByteArray(price);
+
+		System.arraycopy(operation.getBytes(), 0, bytesLong, 0, operation.length());
+
+		System.arraycopy(uuid.getBytes(), 0, bytesLong, operation.length(), uuid.length());
+
+		System.arraycopy(wineName.getBytes(), 0, bytesLong, operation.length() + uuid.length(), wineName.length());
+
+		System.arraycopy(valueBytes, 0, bytesLong, operation.length() + uuid.length() + wineName.length(), valueBytes.length);
+
+		System.arraycopy(seller.getBytes(), 0, bytesLong, operation.length() + uuid.length() + wineName.length() + valueBytes.length, seller.length());
+
+		return bytesLong;
+	}
+
+	private byte[] copyInfoToArrayBuy(String userId, String uuid, String wineName, int quantity, int length) {
+		byte[] bytesLong = new byte[length];
+		byte[] quantityBytes = bigIntToByteArray(quantity);
+		System.arraycopy(userId.getBytes(), 0, bytesLong, 0, userId.getBytes().length);
+
+		//System.arraycopy(uuid, 0, bytesLong, userId.length(), uuid.length());
+
+		System.arraycopy(wineName.getBytes(), 0, bytesLong, userId.getBytes().length, wineName.length());
+
+		System.arraycopy(quantityBytes, 0, bytesLong, wineName.length() + userId.getBytes().length, quantityBytes.length);
+
+		return bytesLong;
 	}
 
 	private static void menu() {
@@ -374,5 +433,10 @@ public class Tintolmarket implements Serializable {
 			System.out.println("Created folder: " + name);
 		}
 		return folder.exists();
+	}
+
+	private byte[] bigIntToByteArray(int i) {
+		byte[] bytes = ByteBuffer.allocate(4).putInt(i).array();
+		return bytes;
 	}
 }

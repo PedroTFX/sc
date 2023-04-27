@@ -1,5 +1,6 @@
 import java.io.Serializable;
 import java.security.PublicKey;
+import java.util.ArrayList;
 
 public class Request implements Serializable {
 	public enum Type {
@@ -66,14 +67,16 @@ public class Request implements Serializable {
 		String name;
 		int price;
 		int quantity;
-		byte[] signature;
-
-		ListWine(String uuid, String name, int price, int quantity, byte[] signature) {
+		ArrayList<String> signedNfts;
+		ArrayList<String> transaction;
+		ArrayList<String> n;
+		ListWine(String uuid, String name, int price, int quantity, ArrayList<String> signedNfts, ArrayList<String> transaction) {
 			this.uuid = uuid;
 			this.name = name;
 			this.price = price;
 			this.quantity = quantity;
-			this.signature = signature;
+			this.signedNfts = signedNfts;
+			this.transaction = transaction;
 		}
 	}
 
@@ -86,14 +89,20 @@ public class Request implements Serializable {
 	}
 
 	static class BuyWine implements Serializable {
+		String uuid;
 		String name;
 		String seller;
 		int quantity;
+		byte[] signature;
+		byte[] transaction;
 
-		BuyWine(String name, String seller, int quantity) {
+		BuyWine(String uuid, String name, String seller, int quantity, byte[] signature, byte[] transaction) {
+			this.uuid = uuid;
 			this.name = name;
 			this.seller = seller;
 			this.quantity = quantity;
+			this.signature = signature;
+			this.transaction = transaction;
 		}
 	}
 

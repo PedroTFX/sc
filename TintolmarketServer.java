@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Base64;
 import java.util.Random;
 
 import javax.net.ServerSocketFactory;
@@ -40,9 +41,11 @@ public class TintolmarketServer implements Serializable {
 	TintolmarketServer(int port, String passwordCifra, String keystoreFilename, String keystorePassword) throws Exception {
 		// Initialize API
 		PrivateKey key = SecurityRSA.getPrivateKey(keystoreFilename, keystorePassword, "server");
+		//publicKey = SecurityRSA.getPublicKey(keystoreFilename, keystorePassword, "server");
 		api = new API(passwordCifra, key);
 
 		try {
+			//verificar integridade dos ficheiros antes de iniciar o programa
 			System.out.println(Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA",
 					Integrity.getAbsolutePath(Constants.USER_HASH)));
 			System.out.println(Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA",
@@ -328,30 +331,41 @@ public class TintolmarketServer implements Serializable {
 			} else if (type == Request.Type.LISTWINE) {
 				Request.ListWine requestListWine = (Request.ListWine) payload;
 
-				boolean ListIntegrity = Integrity.verifyIntegrity(
-						Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA",
-						Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
-				System.out.println(
-						"A verificar a integridade do ficheiro das vendas antes do pedido listWine: " + ListIntegrity);
+				//verifica a integridade dos ficheiros antes de fazer a operacao
+				boolean ListIntegrity = Integrity.verifyIntegrity( Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+				System.out.println("A verificar a integridade do ficheiro das vendas antes do pedido listWine: " + ListIntegrity);
 
-				if (!ListIntegrity) {
-					return new Response(Response.Type.ERROR,
-							new Response.Error("operacao abortada. ficheiro corrompido"));
-				} else {
+				boolean userIntegrity = Integrity.verifyIntegrity( Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+				System.out.println("A verificar a integridade do ficheiro das vendas antes do pedido listWine: " + userIntegrity);
+				if (!userIntegrity) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
 
-					if (api.listWine(threadUserID,
-							requestListWine.uuid, requestListWine.name, requestListWine.quantity,
-							requestListWine.price,
-							requestListWine.signature) == false) {
-						return new Response(Response.Type.ERROR,
-								new Response.Error("Esse vinho não existe. Crie-o primeiro."));
+				}
+
+				PublicKey publicKey = api.getUser(threadUserID).key;
+
+				for (int i = 0; i < requestListWine.signedNfts.size(); i++) {
+					boolean isSignatureVerified = SecurityRSA.verifyTransactionSignature(Base64.getDecoder().decode(requestListWine.signedNfts.get(i)),
+							Base64.getDecoder().decode(requestListWine.transaction.get(i)), publicKey);
+
+					if (!isSignatureVerified) {
+						return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. Assinatura nao esta certa"));
 					}
 
-					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA",
-							Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+					if (!ListIntegrity) {
+						return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
+					} else {
+						if (api.listWine("sell", threadUserID, requestListWine.uuid, requestListWine.name, requestListWine.price,
+								Base64.getDecoder().decode(requestListWine.signedNfts.get(i)), Base64.getDecoder().decode(requestListWine.transaction.get(i))) == false) {
+							return new Response(Response.Type.ERROR,
+							new Response.Error("Esse vinho não existe. Crie-o primeiro."));
+						}
+					}
+
+				}
+					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
 					System.out.println("Hash atualizado nas vendas");
 					return new Response(Response.Type.OK, new Response.OK("Vinho colocado à venda com sucesso!"));
-				}
 			} else if (type == Request.Type.VIEWWINE) {
 				Request.ViewWine requestViewWine = (Request.ViewWine) payload;
 
@@ -390,36 +404,34 @@ public class TintolmarketServer implements Serializable {
 				Response response = null;
 				Request.BuyWine requestBuyWine = (Request.BuyWine) payload;
 
-				boolean userIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA",
-						Integrity.getAbsolutePath(Constants.USER_HASH));
-				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA",
-						Integrity.getAbsolutePath(Constants.WINE_HASH));
-				boolean listIntegrity = Integrity.verifyIntegrity(
-						Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA",
-						Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+				boolean userIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+				boolean wineIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+				boolean listIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
 
 				if (!userIntegrity || !wineIntegrity || !listIntegrity) {
-					return new Response(Response.Type.ERROR,
-							new Response.Error("operacao abortada. ficheiro corrompido"));
-				} else {
-
-					response = api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller,
-							threadUserID);
-
-					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA",
-							Integrity.getAbsolutePath(Constants.USER_HASH));
-					System.out.println("Hash atualizado nos users");
-
-					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA",
-							Integrity.getAbsolutePath(Constants.WINE_HASH));
-					System.out.println("Hash atualizado nos vinhos");
-
-					Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA",
-							Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
-					System.out.println("Hash atualizado nas vendas");
-
-					return response;
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. ficheiro corrompido"));
 				}
+
+				PublicKey publicKey = api.getUser(threadUserID).key;
+
+				boolean isSignatureVerified = SecurityRSA.verifyTransactionSignature(requestBuyWine.signature, requestBuyWine.transaction, publicKey);
+
+				if (!isSignatureVerified) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. Assinatura nao esta certa"));
+				}
+
+				response = api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller, threadUserID, requestBuyWine.uuid, requestBuyWine.signature);
+
+				Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA", Integrity.getAbsolutePath(Constants.USER_HASH));
+				System.out.println("Hash atualizado nos users");
+
+				Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_HASH));
+				System.out.println("Hash atualizado nos vinhos");
+
+				Integrity.updateHashValue(Integrity.getAbsolutePath(Constants.WINE_LISTINGS_FILE), "SHA", Integrity.getAbsolutePath(Constants.WINE_LISTINGS_HASH));
+				System.out.println("Hash atualizado nas vendas");
+
+				return response;
 			} else if (type == Request.Type.WALLET) {
 
 				boolean userIntegrity = Integrity.verifyIntegrity(Integrity.getAbsolutePath(Constants.USER_FILE), "SHA",

@@ -19,4 +19,6 @@ public class Constants {
 	public static final int STARTING_BALANCE = 200;
 
 	public static final String TRUSTSTORE_PASSWORD = "password";
+	public static final String BLOCK_COUNTER = "counter.txt";
+	public static final String BLOCK_COUNTER_HASH = "counter.txt";
 }
