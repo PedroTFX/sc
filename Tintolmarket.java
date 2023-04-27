@@ -21,9 +21,16 @@ import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-//TODO ADICIONAR SYSTEM TIME MILIS PARA AS IMAGENS SEREM UNICAS OU FAZER UMA PASTA PARA CADA CLIENTE
+// TODO ADICIONAR SYSTEM TIME MILIS PARA AS IMAGENS SEREM UNICAS OU FAZER UMA PASTA PARA CADA CLIENTE
 // TODO verificar assinaturas de buy e sell, fazer list,
+// TODO fazer operacoes para o buy
 
+
+//TODO adicionar campo preco ao buy e usar hmac
+
+
+
+// uma venda de 10 e uma linda na blockchain, posso usar o wine listings para acompanhar o processo de compras, tentar adicionar campo preco no client e fazer view antes do buy; usar hmac em vez de hash fazer list e melhorar a verificacao da blockChain
 public class Tintolmarket implements Serializable {
 	//private PrivateKey privateKey = null;
 	private static Scanner sc = new Scanner(System.in);
@@ -265,10 +272,6 @@ public class Tintolmarket implements Serializable {
 			int numOfInts = 2;
 			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt * numOfInts];
 			// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura>
-
-
-
-			//<userId>:<uuid>:<wineName>:<quantity>:<price>:<base64Signature>
 			ArrayList<String> nfts = new ArrayList<>();
 			ArrayList<String> signedNfts = new ArrayList<>();
 
@@ -302,14 +305,27 @@ public class Tintolmarket implements Serializable {
 			PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 			int sizeOfInt = 4;
 			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt];
-			//<userId>:<uuid>:<wineName>:<quantity>:<seller>:<base64Signature>
-			String uuid = UUID.randomUUID().toString();
+			//<userId>:<uuid>:<wineName>:<quantity>:<seller>:<base64Signature> antigo
 
-			bytesLong = copyInfoToArrayBuy(userId, uuid, wineName, quantity, userId.length() + wineName.length() + sizeOfInt);
+			// <buy>:<uuid>:<wineName>:<seller>:<assinatura>
 
-			byte[] signedTransaction = SecurityRSA.sign(bytesLong, privateKey);
+			ArrayList<String> nfts = new ArrayList<>();
+			ArrayList<String> signedNfts = new ArrayList<>();
 
-			return new Request(Request.Type.BUYWINE, new Request.BuyWine(uuid, wineName, seller, quantity, signedTransaction, bytesLong));
+			String uuid = null;
+			for (int i = 0; i < quantity; i++) {
+				uuid = UUID.randomUUID().toString();
+				bytesLong = copyInfoToArrayBuy("sell", uuid, wineName, userId,
+						"sell".length() + uuid.length() + wineName.length() + sizeOfInt + userId.length());
+				nfts.add(Base64.getEncoder().encodeToString(bytesLong));
+				signedNfts.add(Base64.getEncoder().encodeToString(SecurityRSA.sign(bytesLong, privateKey)));
+			}
+
+			//bytesLong = copyInfoToArrayBuy(userId, uuid, wineName, quantity, userId.length() + wineName.length() + sizeOfInt);
+
+			//byte[] signedTransaction = SecurityRSA.sign(bytesLong, privateKey);
+
+			return new Request(Request.Type.BUYWINE, new Request.BuyWine(uuid, wineName, seller, quantity, signedNfts, nfts));
 		} else if (operation.equals("wallet") || operation.equals("w")) {
 			return new Request(Request.Type.WALLET, null);
 		} else if (operation.equals("classify") || operation.equals("c")) {
@@ -384,16 +400,15 @@ public class Tintolmarket implements Serializable {
 		return bytesLong;
 	}
 
-	private byte[] copyInfoToArrayBuy(String userId, String uuid, String wineName, int quantity, int length) {
+	private byte[] copyInfoToArrayBuy(String operation, String uuid, String wineName, String seller, int length) {
 		byte[] bytesLong = new byte[length];
-		byte[] quantityBytes = bigIntToByteArray(quantity);
-		System.arraycopy(userId.getBytes(), 0, bytesLong, 0, userId.getBytes().length);
+		System.arraycopy(operation.getBytes(), 0, bytesLong, 0, operation.length());
 
-		//System.arraycopy(uuid, 0, bytesLong, userId.length(), uuid.length());
+		System.arraycopy(uuid.getBytes(), 0, bytesLong, operation.length(), uuid.length());
 
-		System.arraycopy(wineName.getBytes(), 0, bytesLong, userId.getBytes().length, wineName.length());
+		System.arraycopy(wineName.getBytes(), 0, bytesLong, operation.length() + uuid.length(), wineName.length());
 
-		System.arraycopy(quantityBytes, 0, bytesLong, wineName.length() + userId.getBytes().length, quantityBytes.length);
+		System.arraycopy(seller.getBytes(), 0, bytesLong, operation.length() + uuid.length() + wineName.length(), seller.length());
 
 		return bytesLong;
 	}

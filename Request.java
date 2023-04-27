@@ -69,7 +69,6 @@ public class Request implements Serializable {
 		int quantity;
 		ArrayList<String> signedNfts;
 		ArrayList<String> transaction;
-		ArrayList<String> n;
 		ListWine(String uuid, String name, int price, int quantity, ArrayList<String> signedNfts, ArrayList<String> transaction) {
 			this.uuid = uuid;
 			this.name = name;
@@ -93,15 +92,15 @@ public class Request implements Serializable {
 		String name;
 		String seller;
 		int quantity;
-		byte[] signature;
-		byte[] transaction;
+		ArrayList<String> signedNfts;
+		ArrayList<String> transaction;
 
-		BuyWine(String uuid, String name, String seller, int quantity, byte[] signature, byte[] transaction) {
+		BuyWine(String uuid, String name, String seller, int quantity, ArrayList<String> signedNfts, ArrayList<String> transaction) {
 			this.uuid = uuid;
 			this.name = name;
 			this.seller = seller;
 			this.quantity = quantity;
-			this.signature = signature;
+			this.signedNfts = signedNfts;
 			this.transaction = transaction;
 		}
 	}

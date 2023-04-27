@@ -7,10 +7,8 @@ public class API {
 	private DB db = null;
 	private Blockchain bc = null;
 
-	public API(String cipher, PrivateKey privateKey) {
-		// this.cipher = cipher;
+	public API(String cipher, PrivateKey privateKey) throws Exception {
 		db = new DB(cipher);
-		//long blockNumber = readBlockName();
 		try {
 			bc = new Blockchain(privateKey);
 		} catch (Exception e) {

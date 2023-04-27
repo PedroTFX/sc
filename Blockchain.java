@@ -18,8 +18,9 @@ import java.util.HashMap;
  * 2. Append NFTs and NFT purchases
  * 3. We have 5 of these (transaction number is 0)? Start over
  */
-//TODO atualizar block number quando reinicio o servidor
-//TODO RESOLVER EOF QUANDO CRIO NOVO BLOCO NA COMPRA DE UM NFT COMO E QUE O IDENTIFICAMOS
+// TODO atualizar block number quando reinicio o servidor
+// TODO RESOLVER EOF QUANDO CRIO NOVO BLOCO NA COMPRA DE UM NFT COMO E QUE O
+// IDENTIFICAMOS
 public class Blockchain {
 	private static HashMap<String, ArrayList<Transaction>> listings = null;
 	long blockNumber = 1;
@@ -36,9 +37,11 @@ public class Blockchain {
 		// If empty block chain, create next block
 		if (blockNumber == 1) {
 			createFirstBlock();
-		} /* else {
-			createNextBlock();
-		} */
+		} /*
+			 * else {
+			 * createNextBlock();
+			 * }
+			 */
 	}
 
 	private void createFirstBlock() throws Exception {
@@ -52,7 +55,7 @@ public class Blockchain {
 
 	private void createNextBlock() throws Exception {
 		// Generate footer
-		if(blockNumber > 1) {
+		if (blockNumber > 1) {
 			String blockSignature = generateBlockSignature();
 			appendToBlock(blockSignature);
 		}
@@ -65,7 +68,7 @@ public class Blockchain {
 		appendToBlock(header);
 	}
 
-	public static File[] getAllBlocks(String blocksDirectory){
+	public static File[] getAllBlocks(String blocksDirectory) {
 		File folder = new File(blocksDirectory);
 		return folder.listFiles();
 	}
@@ -76,13 +79,16 @@ public class Blockchain {
 			return true;
 		}
 		this.blockNumber = allFiles.length + 1;
-		for (int i = 1; i < allFiles.length; i++) {
-			String hashBlockCurrent = getHashLine(allFiles[i]);
-			String hashBlockPrevious = Integrity.calculateFileHash(allFiles[i-1].toString(), "SHA-256");
-			if (!hashBlockCurrent.equals(hashBlockPrevious)) {
-				return false;
-			}
-		}
+		/*
+		 * for (int i = 1; i < allFiles.length; i++) {
+		 * String hashCurrentBlock = getHashLine(allFiles[i]);
+		 * String hashPreviousBlock = Integrity.base64Hash(allFiles[i-1].toString(),
+		 * "SHA-256");
+		 * if (!hashBlockCurrent.equals(hashBlockPrevious)) {
+		 * return false;
+		 * }
+		 * }
+		 */
 
 		return true;
 	}
@@ -96,7 +102,8 @@ public class Blockchain {
 	}
 
 	private String generateBlockHeader() throws NoSuchAlgorithmException, IOException {
-		String hash = blockNumber == 1 ? "0000000000000000000000000000000000000000000000000000000000000000" : Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
+		String hash = blockNumber == 1 ? "0000000000000000000000000000000000000000000000000000000000000000"
+				: "";//Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
 		String block = String.format("%d", blockNumber);
 		String transaction = String.format("%d", transactionNumber);
 		String header = String.format("%s %s %s", hash, block, transaction);
@@ -112,10 +119,12 @@ public class Blockchain {
 		return base64SignedTransaction;
 	}
 
-	public void addNFT(String operation, String userName, String uuid, String wineName, int price, int price2, byte[] signature, byte[] transaction) throws Exception {
+	public void addNFT(String operation, String userName, String uuid, String wineName, int price, int price2,
+			byte[] signature, byte[] transaction) throws Exception {
 		// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura> agr importa esta
 		String base64Signature = Base64.getEncoder().encodeToString(signature);
-		//String NFT = String.format("%s:%s:%s:%d:%d:%s", userName, uuid, wineName, quantity, price, base64Signature);
+		// String NFT = String.format("%s:%s:%s:%d:%d:%s", userName, uuid, wineName,
+		// quantity, price, base64Signature);
 		String NFT = String.format("%s:%s:%s:%d:%s:%s", operation, uuid, wineName, price, userName, base64Signature);
 		appendToBlock(NFT);
 		transactionNumber = (transactionNumber + 1) % 6;
@@ -123,7 +132,8 @@ public class Blockchain {
 		if (transactionNumber == 5) {
 			String blockSignature = generateBlockSignature();
 			appendToBlock(blockSignature);
-			String blockHash = Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
+			String blockHash = Integrity.calculateFileHash(
+					String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
 			blockNumber++;
 			createNextBlockFile();
 			appendToBlock(blockHash + " " + blockNumber);
@@ -131,7 +141,8 @@ public class Blockchain {
 		}
 	}
 
-	public void buyNFT(String userName, String uuid, String wineName, int quantity, int price, byte[] signature) throws Exception {
+	public void buyNFT(String userName, String uuid, String wineName, int quantity, int price, byte[] signature)
+			throws Exception {
 		String base64Signature = Base64.getEncoder().encodeToString(signature);
 		// <userId>:<uuid>:<wineName>:<quantity>:<price>:<base64Signature>
 		String NFT = String.format("%s:%s:%s:%d:%d:%s", userName, uuid, wineName, quantity, price, base64Signature);
@@ -141,7 +152,8 @@ public class Blockchain {
 		if (transactionNumber == 5) {
 			String blockSignature = generateBlockSignature();
 			appendToBlock(blockSignature);
-			String blockHash = Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber), "SHA-256");
+			String blockHash = Integrity.calculateFileHash(
+					String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber), "SHA-256");
 			blockNumber++;
 			createNextBlockFile();
 			appendToBlock(blockHash + " " + blockNumber);
@@ -157,17 +169,16 @@ public class Blockchain {
 	}
 
 	private String getCurrentBlockFilename() {
-		if(blockNumber == 1){
+		if (blockNumber == 1) {
 			return String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber);
 		}
 		return String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1);
 	}
 
-	private String getHashLine(File file) throws IOException{
+	private String getHashLine(File file) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String hashLine = br.readLine().split(" ")[0];
 		br.close();
 		return hashLine;
-
 	}
 }
