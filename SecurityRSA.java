@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -169,5 +170,12 @@ public class SecurityRSA {
 		Cipher cipher = Cipher.getInstance("AES");
 		cipher.init(Cipher.ENCRYPT_MODE, aesKey);
 		return cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public static boolean verifyTransactionSignature(byte[] maybeSigned, byte[] toSign, PublicKey key) throws InvalidKeyException, SignatureException, NoSuchAlgorithmException{
+		Signature signature = Signature.getInstance("SHA512withRSA");
+		signature.initVerify(key);
+		signature.update(toSign);
+		return signature.verify(maybeSigned);
 	}
 }
