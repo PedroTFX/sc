@@ -162,7 +162,13 @@ public class API {
 		return new Response(Response.Type.OK, new Response.OK("Vinho classificado com sucesso"));
 	}
 
-	public Response buyWine(String name, int quantity, String seller, String buyer, String uuid, byte[] signature) throws Exception {
+	public Response buyWine(String username, WinePurchase winePurchase, String base64Signature) throws Exception {
+
+		String buyer = username;
+		String name = winePurchase.name;
+		String seller = winePurchase.seller;
+		int quantity = winePurchase.quantity;
+		String uuid = winePurchase.uuid;
 		String[] buyerInfo = db.user.get(buyer).split(":");
 
 		// ver se o vinho existe
@@ -210,7 +216,11 @@ public class API {
 		db.user.update(seller, String.join(":", sellerInfo));
 		db.user.update(buyer, String.join(":", buyerInfo));
 
-		bc.buyNFT(name, uuid, name, quantity, price, signature);
+		//bc.buyNFT(name, uuid, name, quantity, price, signature);
+
+		// Add transaction to Blockchain: <sell/buy>:<uuid>:<username>:<wineName>:<quantity>:<price>:<base64Signature>
+		String nft = String.format("buy:%s:%s:%s:%d:%s", uuid, name, seller, quantity, base64Signature);
+		bc.addNFT(nft);
 
 		return new Response(Response.Type.OK, new Response.OK("unidades compradas com sucesso"));
 	}

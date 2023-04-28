@@ -1,6 +1,4 @@
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.PrivateKey;
@@ -85,20 +83,22 @@ public class Request implements Serializable {
 	}
 
 	static class BuyWine implements Serializable {
-		String uuid;
+		WinePurchase winePurchase;
+/* 		String uuid;
 		String name;
 		String seller;
 		int quantity;
 		ArrayList<String> signedNfts;
-		ArrayList<String> transaction;
+		ArrayList<String> transaction; */
 
-		BuyWine(String uuid, String name, String seller, int quantity, ArrayList<String> signedNfts, ArrayList<String> transaction) {
-			this.uuid = uuid;
+		BuyWine(WinePurchase winePurchase/* String uuid, String name, String seller, int quantity, ArrayList<String> signedNfts, ArrayList<String> transaction */) {
+			this.winePurchase = winePurchase;
+/* 			this.uuid = uuid;
 			this.name = name;
 			this.seller = seller;
 			this.quantity = quantity;
 			this.signedNfts = signedNfts;
-			this.transaction = transaction;
+			this.transaction = transaction; */
 		}
 	}
 

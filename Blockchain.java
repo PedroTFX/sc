@@ -22,7 +22,7 @@ import java.util.HashMap;
 // TODO RESOLVER EOF QUANDO CRIO NOVO BLOCO NA COMPRA DE UM NFT COMO E QUE O
 // IDENTIFICAMOS
 public class Blockchain {
-	long blockNumber = 1;
+	long blockNumber = 0;
 	int transactionNumber = 0;
 	PrivateKey privateKey = null;
 
@@ -33,119 +33,96 @@ public class Blockchain {
 			throw new Exception("Blockchain corrupted! Aborting...");
 		}
 
-		// If empty block chain, create next block
-		if (blockNumber == 1) {
-			createFirstBlock();
+		// If empty block chain, create first block
+		if (blockNumber == 0) {
+			createNextBlock();
 		}
-	}
-
-	private void createFirstBlock() throws Exception {
-		// Advance to next block
-		createNextBlockFile();
-
-		// Generate header of next block
-		String header = generateBlockHeader();
-		appendToBlock(header);
-	}
-
-	private void createNextBlock() throws Exception {
-		// Generate footer
-		if (blockNumber > 1) {
-			String blockSignature = generateBlockSignature();
-			appendToBlock(blockSignature);
-		}
-
-		// Advance to next block
-		createNextBlockFile();
-
-		// Generate header of next block
-		String header = generateBlockHeader();
-		appendToBlock(header);
-	}
-
-	public static File[] getAllBlocks(String blocksDirectory) {
-		File folder = new File(blocksDirectory);
-		return folder.listFiles();
-	}
-
-	private boolean verify() throws IOException, NoSuchAlgorithmException {
-		File[] allFiles = getAllBlocks(Constants.BLOCKCHAIN_FOLDER);
-		if (allFiles.length == 0) {
-			return true;
-		}
-		this.blockNumber = allFiles.length + 1;
-		/*
-		 * for (int i = 1; i < allFiles.length; i++) {
-		 * String hashCurrentBlock = getHashLine(allFiles[i]);
-		 * String hashPreviousBlock = Integrity.base64Hash(allFiles[i-1].toString(),
-		 * "SHA-256");
-		 * if (!hashBlockCurrent.equals(hashBlockPrevious)) {
-		 * return false;
-		 * }
-		 * }
-		 */
-
-		return true;
-	}
-
-	private void createNextBlockFile() throws IOException {
-		File blockFile = new File(getCurrentBlockFilename());
-		if (!blockFile.exists()) {
-			blockFile.createNewFile();
-			System.out.println("Next block file created ✅");
-		}
-	}
-
-	private String generateBlockHeader() throws NoSuchAlgorithmException, IOException {
-		String hash = blockNumber == 1 ? "0000000000000000000000000000000000000000000000000000000000000000"
-				: "";//Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
-		String block = String.format("%d", blockNumber);
-		String transaction = String.format("%d", transactionNumber);
-		String header = String.format("%s %s %s", hash, block, transaction);
-		return header;
-	}
-
-	private String generateBlockSignature() throws Exception {
-		// Colocar todos os bytes do block_xxx.blk no array
-		Path path = Paths.get(getCurrentBlockFilename());
-		byte[] bytes = Files.readAllBytes(path);
-		byte[] signedTransaction = SecurityRSA.sign(bytes, privateKey);
-		String base64SignedTransaction = Base64.getEncoder().encodeToString(signedTransaction);
-		return base64SignedTransaction;
 	}
 
 	public void addNFT(String nft) throws Exception {
 		appendToBlock(nft);
+		incrementTransaction();
+	}
+
+	public void buyNFT(String nft) throws Exception {
+		appendToBlock(nft);
+		incrementTransaction();
+	}
+
+	private boolean verify() throws Exception {
+		File[] allFiles = getAllBlocks(Constants.BLOCKCHAIN_FOLDER);
+		if (allFiles.length == 0) {
+			return true;
+		}
+		this.blockNumber = allFiles.length;
+
+		for (int i = 1; i < allFiles.length; i++) {
+			// check if previous block is valid
+			String currentBlockContent = new String(Files.readAllBytes(allFiles[i].toPath()));
+			String[] currentBlockLines = currentBlockContent.split("\n");
+			String currentBlockHeader = currentBlockLines[0];
+			String[] currentBlockHeaderParts = currentBlockHeader.split(" ");
+			String previousBlockStoredHash = currentBlockHeaderParts[0];
+			String previousBlockContent = new String(Files.readAllBytes(allFiles[i - 1].toPath()));
+			String previousBlockCalculatedHash = Integrity.base64Hash(previousBlockContent);
+			if (!previousBlockStoredHash.equals(previousBlockCalculatedHash)) {
+				return false;
+			} else {
+				System.out.println("Block #" + i + " is valid");
+			}
+
+			// If we're on the last block, update transaction number
+			boolean lastBlock = i == allFiles.length - 1;
+			if (lastBlock) {
+				transactionNumber = currentBlockLines.length - 1;
+			}
+		}
+
+		return true;
+	}
+
+	private static File[] getAllBlocks(String blocksDirectory) {
+		File folder = new File(blocksDirectory);
+		return folder.listFiles();
+	}
+
+	private void createNextBlock() throws Exception {
+		// Generate block header
+		String nextBlockHeader = generateNextBlockHeader();
+
+		// Create next block
+		blockNumber++;
+		createNextBlockFile();
+		appendToBlock(nextBlockHeader);
+		transactionNumber = 0;
+	}
+
+	private String generateNextBlockHeader() throws Exception {
+		String hash = blockNumber == 0 ? "0000000000000000000000000000000000000000000000000000000000000000"
+				: getCurrentBlockHash();
+		return String.format("%s %d %d", hash, blockNumber + 1, 0);
+	}
+
+	private String getCurrentBlockHash() throws Exception {
+		Path path = Paths.get(getCurrentBlockFilename());
+		byte[] bytes = Files.readAllBytes(path);
+		String blockContent = new String(bytes);
+		return Integrity.base64Hash(blockContent);
+	}
+
+	private void incrementTransaction() throws Exception {
 		transactionNumber = (transactionNumber + 1) % 6;
 		if (transactionNumber == 5) {
-			String blockSignature = generateBlockSignature();
-			appendToBlock(blockSignature);
-			String blockHash = Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
-			blockNumber++;
-			createNextBlockFile();
-			appendToBlock(blockHash + " " + blockNumber);
-			transactionNumber = 0;
+			appendToBlock(generateCurrentBlockSignature());
+			createNextBlock();
 		}
 	}
 
-	public void buyNFT(String userName, String uuid, String wineName, int quantity, int price, byte[] signature)
-			throws Exception {
-		String base64Signature = Base64.getEncoder().encodeToString(signature);
-		// <userId>:<uuid>:<wineName>:<quantity>:<price>:<base64Signature>
-		String NFT = String.format("%s:%s:%s:%d:%d:%s", userName, uuid, wineName, quantity, price, base64Signature);
-		appendToBlock(NFT);
-		transactionNumber = (transactionNumber + 1) % 5;
-
-		if (transactionNumber == 5) {
-			String blockSignature = generateBlockSignature();
-			appendToBlock(blockSignature);
-			String blockHash = Integrity.calculateFileHash(
-					String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber), "SHA-256");
-			blockNumber++;
-			createNextBlockFile();
-			appendToBlock(blockHash + " " + blockNumber);
-			transactionNumber = 0;
-		}
+	private String generateCurrentBlockSignature() throws Exception {
+		Path path = Paths.get(getCurrentBlockFilename());
+		byte[] bytes = Files.readAllBytes(path);
+		byte[] signedTransaction = SecurityRSA.sign(bytes, privateKey);
+		return Base64.getEncoder().encodeToString(signedTransaction);
 	}
 
 	private void appendToBlock(String str) throws Exception {
@@ -156,16 +133,11 @@ public class Blockchain {
 	}
 
 	private String getCurrentBlockFilename() {
-		if (blockNumber == 1) {
-			return String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber);
-		}
-		return String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1);
+		return String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber);
 	}
 
-	private String getHashLine(File file) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(file));
-		String hashLine = br.readLine().split(" ")[0];
-		br.close();
-		return hashLine;
+	private void createNextBlockFile() throws IOException {
+		File blockFile = new File(getCurrentBlockFilename());
+		blockFile.createNewFile();
 	}
 }

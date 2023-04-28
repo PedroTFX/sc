@@ -32,10 +32,8 @@ import javax.net.ssl.SSLSocketFactory;
 
 // uma venda de 10 e uma linda na blockchain, posso usar o wine listings para acompanhar o processo de compras, tentar adicionar campo preco no client e fazer view antes do buy; usar hmac em vez de hash fazer list e melhorar a verificacao da blockChain
 public class Tintolmarket implements Serializable {
-	//private PrivateKey privateKey = null;
 	private static Scanner sc = new Scanner(System.in);
 	private SSLSocket clientSocket = null;
-	//private SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 	SSLSocket sslsocket = null;
 	private ObjectInputStream in = null;
 	private ObjectOutputStream out = null;
@@ -74,7 +72,6 @@ public class Tintolmarket implements Serializable {
 		this.userId = userId;
 		this.keyStore = keyStore;
 		this.keyStorePassword = keyStorePassword;
-		//privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 
 		initializeServerConnection(host, port);
 
@@ -100,9 +97,7 @@ public class Tintolmarket implements Serializable {
 		try {
 			System.setProperty("javax.net.ssl.trustStore", trustStore);
 			System.setProperty("javax.net.ssl.trustStorePassword", Constants.TRUSTSTORE_PASSWORD);
-			/* SocketFactory sf = SSLSocketFactory.getDefault();
-			clientSocket = (SSLSocket) sf.createSocket(host, port); */
-			/* SSL*/SocketFactory sslSocketFactory = /* (SSLSocketFactory) */ SSLSocketFactory.getDefault();
+			SocketFactory sslSocketFactory = SSLSocketFactory.getDefault();
 			clientSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
 			out = new ObjectOutputStream(clientSocket.getOutputStream());
 			in = new ObjectInputStream(clientSocket.getInputStream());
@@ -209,17 +204,12 @@ public class Tintolmarket implements Serializable {
 					PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
 					Response.ReadMessages responseMessages = (Response.ReadMessages)response.payload;
 					ArrayList<String> messages = responseMessages.messages;
-					/* String secretKeyString = null;
-					if (messages.size() > 0) {
-						secretKeyString = messages.get(0).split(":")[3];
-					} */
 					for (int i = 0; i < messages.size(); i++) {
 						String[] messageTokens = messages.get(i).split(":");
 						String secretKeyString = messages.get(i).split(":")[3];
-						//Key decryptedSecretKey = SecurityRSA.unwrapKey(messageTokens[3].getBytes(), privateKey);
-						Key decryptedSecretKey = SecurityRSA.decryptAesKey(Base64.getDecoder().decode(secretKeyString)/* messageTokens[3].getBytes() */, privateKey);
+						Key decryptedSecretKey = SecurityRSA.decryptAesKey(Base64.getDecoder().decode(secretKeyString), privateKey);
 
-						System.out.println(String.format("%s recebeu a seguinte mensagem de %s: %s", userId, messageTokens[1], SecurityRSA.decrypt(Base64.getDecoder().decode(messageTokens[2])/* .getBytes() */, decryptedSecretKey)));
+						System.out.println(String.format("%s recebeu a seguinte mensagem de %s: %s", userId, messageTokens[1], SecurityRSA.decrypt(Base64.getDecoder().decode(messageTokens[2]), decryptedSecretKey)));
 					}
 				}
 			} catch (Exception e2) {
@@ -291,31 +281,13 @@ public class Tintolmarket implements Serializable {
 			String wineName = tokens[1];
 			String seller = tokens[2];
 			int quantity = Integer.parseInt(tokens[3]);
+			String uuid = UUID.randomUUID().toString();
+			Request.BuyWine buyWine = new Request.BuyWine(new WinePurchase(uuid, wineName, seller, quantity));
 
 			PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
-			int sizeOfInt = 4;
-			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt];
-			//<userId>:<uuid>:<wineName>:<quantity>:<seller>:<base64Signature> antigo
+			Request.Signed<Request.BuyWine> signedBuyWine = new Request.Signed<Request.BuyWine>(buyWine, privateKey);
 
-			// <buy>:<uuid>:<wineName>:<seller>:<assinatura>
-
-			ArrayList<String> nfts = new ArrayList<>();
-			ArrayList<String> signedNfts = new ArrayList<>();
-
-			String uuid = null;
-			for (int i = 0; i < quantity; i++) {
-				uuid = UUID.randomUUID().toString();
-				bytesLong = copyInfoToArrayBuy("sell", uuid, wineName, userId,
-						"sell".length() + uuid.length() + wineName.length() + sizeOfInt + userId.length());
-				nfts.add(Base64.getEncoder().encodeToString(bytesLong));
-				signedNfts.add(Base64.getEncoder().encodeToString(SecurityRSA.sign(bytesLong, privateKey)));
-			}
-
-			//bytesLong = copyInfoToArrayBuy(userId, uuid, wineName, quantity, userId.length() + wineName.length() + sizeOfInt);
-
-			//byte[] signedTransaction = SecurityRSA.sign(bytesLong, privateKey);
-
-			return new Request(Request.Type.BUYWINE, new Request.BuyWine(uuid, wineName, seller, quantity, signedNfts, nfts));
+			return new Request(Request.Type.BUYWINE, signedBuyWine);
 		} else if (operation.equals("wallet") || operation.equals("w")) {
 			return new Request(Request.Type.WALLET, null);
 		} else if (operation.equals("classify") || operation.equals("c")) {
@@ -372,36 +344,6 @@ public class Tintolmarket implements Serializable {
 		return null;
 	}
 
-	private byte[] copyInfoToArrayList(String operation, String uuid, String userId, int quantity, String winename, int price,  int totalLength) {
-		// <sell>:<uuid>:<userId>:<quantity>:<winename>:<price>
-		byte[] bytesLong = new byte[totalLength];
-		byte[] quantityBytes = bigIntToByteArray(quantity);
-		byte[] priceBytes = bigIntToByteArray(price);
-		int length = 0;
-		System.arraycopy(operation.getBytes(), 0, bytesLong, 0, operation.length());
-
-		length+= operation.length();
-
-		System.arraycopy(uuid.getBytes(), 0, bytesLong, totalLength, uuid.length());
-
-		length += uuid.length();
-
-		System.arraycopy(userId.getBytes(), 0, bytesLong, length, userId.length());
-
-		length+= userId.length();
-
-		System.arraycopy(quantityBytes, 0, bytesLong, length, quantityBytes.length);
-
-		length+= quantityBytes.length;
-
-		System.arraycopy(winename.getBytes(), 0, bytesLong, length, winename.length());
-
-		length+= winename.length();
-
-		System.arraycopy(priceBytes, 0, bytesLong, length, priceBytes.length);
-
-		return bytesLong;
-	}
 
 	private byte[] copyInfoToArrayBuy(String operation, String uuid, String wineName, String seller, int length) {
 		byte[] bytesLong = new byte[length];

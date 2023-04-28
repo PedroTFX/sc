@@ -125,7 +125,7 @@ public class TintolmarketServer implements Serializable {
 
 					// Reply with nonce and flag that indicates if user ID exists
 					nonce = new Random().nextLong();
-					User newUser = api.getUser(authenticationUserID);// Data.readUserInfoFromFile(authenticationUserID)
+					User newUser = api.getUser(authenticationUserID);
 					outStream.writeObject(
 							new Response(Response.Type.AUTHNONCE, new Response.AuthNonce(nonce, newUser == null)));
 
@@ -298,17 +298,17 @@ public class TintolmarketServer implements Serializable {
 
 				return new Response(Response.Type.VIEWWINE, new Response.ViewWineAndListings(viewWine.wine, viewWine.listings));
 			} else if (type == Request.Type.BUYWINE) {
-				Request.BuyWine requestBuyWine = (Request.BuyWine) payload;
-
+				Request.Signed<Request.BuyWine> signedBuyWine = (Request.Signed<Request.BuyWine>) payload;
 				PublicKey publicKey = api.getUser(threadUserID).key;
-
-				boolean isSignatureVerified = true; //SecurityRSA.verifyTransactionSignature(requestBuyWine.signedNfts, requestBuyWine.transaction, publicKey);
-
-				if (!isSignatureVerified) {
-					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. Assinatura nao esta certa"));
+				if (!signedBuyWine.verify(publicKey)) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("operacao abortada. Assinatura nao esta certa"));
 				}
 
-				return null; //api.buyWine(requestBuyWine.name, requestBuyWine.quantity, requestBuyWine.seller, threadUserID, requestBuyWine.uuid, requestBuyWine.signedNfts);
+				Request.BuyWine listWine = signedBuyWine.transaction;
+				String base64Signature = signedBuyWine.base64Signature;
+
+				return api.buyWine(threadUserID, listWine.winePurchase, base64Signature); 
 			} else if (type == Request.Type.WALLET) {
 				User user = api.getUser(threadUserID);
 				return new Response(Response.Type.OK, new Response.OK("Saldo obtido com sucesso: " + user.balance));

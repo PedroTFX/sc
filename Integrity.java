@@ -36,7 +36,7 @@ public class Integrity {
 		return digest;
 	}
 
-	private static String base64Hash(String message) throws Exception {
+	public static String base64Hash(String message) throws Exception {
 		return Base64.getEncoder().encodeToString(hash(message.getBytes()));
 	}
 
@@ -63,6 +63,7 @@ public class Integrity {
 	}
 
 	/*
+
 
 	public static boolean verifyIntegrity(String filePath, String algorithm, String hashFilePath)
 			throws IOException, NoSuchAlgorithmException {

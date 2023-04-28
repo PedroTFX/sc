@@ -167,7 +167,7 @@ public class SecurityRSA {
 
 	public static byte[] sign(byte[] toSign, PrivateKey key) throws Exception {
 		Signature signature = Signature.getInstance("SHA512withRSA");
-		signature.initSign(key/* , new SecureRandom() */);
+		signature.initSign(key);
 		signature.update(toSign);
 		return signature.sign();
 	}
