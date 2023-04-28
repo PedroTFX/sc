@@ -263,29 +263,19 @@ public class Tintolmarket implements Serializable {
 				return null;
 			}
 
+			// Create List Wine request
 			String wineName = tokens[1];
 			int price = Integer.parseInt(tokens[2]);
 			int quantity = Integer.parseInt(tokens[3]);
+			String uuid = UUID.randomUUID().toString();
+			Request.ListWine listWine = new Request.ListWine(new WineSale(uuid, wineName, price, quantity));
 
+			// Sign request
 			PrivateKey privateKey = SecurityRSA.getPrivateKey(keyStore, keyStorePassword, userId);
-			int sizeOfInt = 4;
-			int numOfInts = 2;
-			byte[] bytesLong = new byte[userId.length() + wineName.length() + sizeOfInt * numOfInts];
-			// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura>
-			ArrayList<String> nfts = new ArrayList<>();
-			ArrayList<String> signedNfts = new ArrayList<>();
+			Request.Signed<Request.ListWine> signedListWine = new Request.Signed<Request.ListWine>(listWine, privateKey);
 
-			String uuid = null;
-			for (int i = 0; i < quantity; i++) {
-				uuid = UUID.randomUUID().toString();
-				bytesLong = copyInfoToArrayList("sell", uuid, wineName, price, userId,  "sell".length() + uuid.length() + wineName.length() + sizeOfInt + userId.length());
-				nfts.add(Base64.getEncoder().encodeToString(bytesLong));
-				signedNfts.add( Base64.getEncoder().encodeToString(SecurityRSA.sign(bytesLong, privateKey)));
-			}
-
-
-
-			return new Request(Request.Type.LISTWINE, new Request.ListWine(uuid, wineName, price, quantity, signedNfts, nfts));
+			// Send request
+			return new Request(Request.Type.LISTWINE, signedListWine);
 		} else if (operation.equals("view") || operation.equals("v")) {
 			if(tokens.length != 2){
 				System.out.println("Usage: view <wine>");
@@ -382,20 +372,33 @@ public class Tintolmarket implements Serializable {
 		return null;
 	}
 
-	private byte[] copyInfoToArrayList(String operation, String uuid, String wineName, int price, String seller, int length) {
-		// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura>
-		byte[] bytesLong = new byte[length];
-		byte[] valueBytes = bigIntToByteArray(price);
-
+	private byte[] copyInfoToArrayList(String operation, String uuid, String userId, int quantity, String winename, int price,  int totalLength) {
+		// <sell>:<uuid>:<userId>:<quantity>:<winename>:<price>
+		byte[] bytesLong = new byte[totalLength];
+		byte[] quantityBytes = bigIntToByteArray(quantity);
+		byte[] priceBytes = bigIntToByteArray(price);
+		int length = 0;
 		System.arraycopy(operation.getBytes(), 0, bytesLong, 0, operation.length());
 
-		System.arraycopy(uuid.getBytes(), 0, bytesLong, operation.length(), uuid.length());
+		length+= operation.length();
 
-		System.arraycopy(wineName.getBytes(), 0, bytesLong, operation.length() + uuid.length(), wineName.length());
+		System.arraycopy(uuid.getBytes(), 0, bytesLong, totalLength, uuid.length());
 
-		System.arraycopy(valueBytes, 0, bytesLong, operation.length() + uuid.length() + wineName.length(), valueBytes.length);
+		length += uuid.length();
 
-		System.arraycopy(seller.getBytes(), 0, bytesLong, operation.length() + uuid.length() + wineName.length() + valueBytes.length, seller.length());
+		System.arraycopy(userId.getBytes(), 0, bytesLong, length, userId.length());
+
+		length+= userId.length();
+
+		System.arraycopy(quantityBytes, 0, bytesLong, length, quantityBytes.length);
+
+		length+= quantityBytes.length;
+
+		System.arraycopy(winename.getBytes(), 0, bytesLong, length, winename.length());
+
+		length+= winename.length();
+
+		System.arraycopy(priceBytes, 0, bytesLong, length, priceBytes.length);
 
 		return bytesLong;
 	}

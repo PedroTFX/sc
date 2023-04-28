@@ -1,6 +1,12 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
 
 public class Request implements Serializable {
 	public enum Type {
@@ -63,19 +69,10 @@ public class Request implements Serializable {
 	}
 
 	static class ListWine implements Serializable {
-		String uuid;
-		String name;
-		int price;
-		int quantity;
-		ArrayList<String> signedNfts;
-		ArrayList<String> transaction;
-		ListWine(String uuid, String name, int price, int quantity, ArrayList<String> signedNfts, ArrayList<String> transaction) {
-			this.uuid = uuid;
-			this.name = name;
-			this.price = price;
-			this.quantity = quantity;
-			this.signedNfts = signedNfts;
-			this.transaction = transaction;
+		WineSale wineSale;
+
+		ListWine(WineSale wineSale) {
+			this.wineSale = wineSale;
 		}
 	}
 
@@ -130,6 +127,35 @@ public class Request implements Serializable {
 		String user;
 		Wallet(String user) {
 
+		}
+	}
+
+	static class Signed<T extends Serializable> implements Serializable {
+		T transaction;
+		String base64Signature;
+
+		public Signed(T transaction, PrivateKey key) throws Exception {
+			this.transaction = transaction;
+			this.base64Signature = sign(transaction, key);
+		}
+
+		public boolean verify(PublicKey key) throws Exception {
+			byte[] signature = Base64.getDecoder().decode(base64Signature);
+			byte[] toVerify = getTransactionBytes();
+			return SecurityRSA.verifySignature(toVerify, signature, key);
+		}
+
+		private String sign(T transaction, PrivateKey key) throws Exception {
+			byte[] signedBytes = SecurityRSA.sign(getTransactionBytes(), key);
+			return Base64.getEncoder().encodeToString(signedBytes);
+		}
+
+		private byte[] getTransactionBytes() throws Exception {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(baos);
+			oos.writeObject(transaction);
+			oos.close();
+			return baos.toByteArray();
 		}
 	}
 }

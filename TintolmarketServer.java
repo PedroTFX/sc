@@ -274,25 +274,17 @@ public class TintolmarketServer implements Serializable {
 
 				return new Response(Response.Type.OK, new Response.OK("Vinho adicionado com sucesso"));
 			} else if (type == Request.Type.LISTWINE) {
-				Request.ListWine requestListWine = (Request.ListWine) payload;
-
+				Request.Signed<Request.ListWine> signedListWine = (Request.Signed<Request.ListWine>) payload;
 				PublicKey publicKey = api.getUser(threadUserID).key;
+				if(!signedListWine.verify(publicKey)) {
+					return new Response(Response.Type.ERROR, new Response.Error("operacao abortada. Assinatura nao esta certa"));
+				}
+				Request.ListWine listWine = signedListWine.transaction;
+				String base64Signature = signedListWine.base64Signature;
 
-				for (int i = 0; i < requestListWine.signedNfts.size(); i++) {
-					boolean isSignatureVerified = SecurityRSA.verifyTransactionSignature(
-							Base64.getDecoder().decode(requestListWine.signedNfts.get(i)),
-							Base64.getDecoder().decode(requestListWine.transaction.get(i)), publicKey);
-					if (!isSignatureVerified) {
-						return new Response(Response.Type.ERROR,
-								new Response.Error("operacao abortada. Assinatura nao esta certa"));
-					}
-
-					if (api.listWine("sell", threadUserID, requestListWine.uuid, requestListWine.name,
-							requestListWine.price, Base64.getDecoder().decode(requestListWine.signedNfts.get(i)),
-							Base64.getDecoder().decode(requestListWine.transaction.get(i))) == false) {
-						return new Response(Response.Type.ERROR, new Response.Error("Esse vinho não existe. Crie-o primeiro."));
-					}
-
+				if (api.listWine(threadUserID, listWine.wineSale, base64Signature) == false) {
+					return new Response(Response.Type.ERROR,
+							new Response.Error("Esse vinho não existe. Crie-o primeiro."));
 				}
 
 				return new Response(Response.Type.OK, new Response.OK("Vinho colocado à venda com sucesso!"));

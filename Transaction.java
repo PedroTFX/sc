@@ -7,7 +7,7 @@ public class Transaction {
 	private byte[] signedTransaction;
 	private byte[] transaction;
 
-	public Transaction(String wineName, int quantity, double value, String buyer, String seller, byte[] signedTransaction, byte[] transaction) {
+	public Transaction(String wineName, int quantity, int value, String buyer, String seller, byte[] signedTransaction, byte[] transaction) {
 		this.wineName = wineName;
 		this.value = value;
 		this.value = value;

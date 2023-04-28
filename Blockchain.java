@@ -22,7 +22,6 @@ import java.util.HashMap;
 // TODO RESOLVER EOF QUANDO CRIO NOVO BLOCO NA COMPRA DE UM NFT COMO E QUE O
 // IDENTIFICAMOS
 public class Blockchain {
-	private static HashMap<String, ArrayList<Transaction>> listings = null;
 	long blockNumber = 1;
 	int transactionNumber = 0;
 	PrivateKey privateKey = null;
@@ -37,11 +36,7 @@ public class Blockchain {
 		// If empty block chain, create next block
 		if (blockNumber == 1) {
 			createFirstBlock();
-		} /*
-			 * else {
-			 * createNextBlock();
-			 * }
-			 */
+		}
 	}
 
 	private void createFirstBlock() throws Exception {
@@ -119,21 +114,13 @@ public class Blockchain {
 		return base64SignedTransaction;
 	}
 
-	public void addNFT(String operation, String userName, String uuid, String wineName, int price, int price2,
-			byte[] signature, byte[] transaction) throws Exception {
-		// <sell>:<uuid>:<wineName>:<price>:<seller>:<assinatura> agr importa esta
-		String base64Signature = Base64.getEncoder().encodeToString(signature);
-		// String NFT = String.format("%s:%s:%s:%d:%d:%s", userName, uuid, wineName,
-		// quantity, price, base64Signature);
-		String NFT = String.format("%s:%s:%s:%d:%s:%s", operation, uuid, wineName, price, userName, base64Signature);
-		appendToBlock(NFT);
+	public void addNFT(String nft) throws Exception {
+		appendToBlock(nft);
 		transactionNumber = (transactionNumber + 1) % 6;
-
 		if (transactionNumber == 5) {
 			String blockSignature = generateBlockSignature();
 			appendToBlock(blockSignature);
-			String blockHash = Integrity.calculateFileHash(
-					String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
+			String blockHash = Integrity.calculateFileHash(String.format("./%s/block_%d.blk", Constants.BLOCKCHAIN_FOLDER, blockNumber - 1), "SHA-256");
 			blockNumber++;
 			createNextBlockFile();
 			appendToBlock(blockHash + " " + blockNumber);

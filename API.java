@@ -65,7 +65,12 @@ public class API {
 	}
 
 	// Wine Listings
-	public boolean listWine(String operation, String userName, String uuid, String wineName, int price, byte[] signature, byte[] transaction) throws Exception {
+	public boolean listWine(String username, WineSale listWine, String base64Signature) throws Exception {
+		String wineName = listWine.name;
+		String uuid = listWine.uuid;
+		int price = listWine.price;
+		int quantity = listWine.quantity;
+
 		// Verificar se este vinho existe
 		boolean wineNotExists = db.wine.get(wineName) == null;
 		if (wineNotExists) {
@@ -73,20 +78,22 @@ public class API {
 		}
 
 		// Verificar se este user tem este vinho à venda
-		boolean isSelling = db.listing.get(wineName, userName) != null;
-		if (isSelling) {
+		boolean isAlreadySelling = db.listing.get(wineName, username) != null;
+		if (isAlreadySelling) {
 			// Update
-			String id = String.format("%s:%s", wineName, userName);
-			String row = String.format("%s:%s:%d:%s", wineName, userName, price, price);
+			String id = String.format("%s:%s", wineName, username);
+			String row = String.format("%s:%s:%d:%s", wineName, username, price, price);
 			db.listing.update(id, row);
 		} else {
 			// Create (wine_listing.txt)
-			String row = String.format("%s:%s:%d:%s", wineName, userName, price, price);
+			String row = String.format("%s:%s:%d:%s", wineName, username, price, price);
 			db.listing.add(row);
 
 		}
-		// Create (blockchain)
-		bc.addNFT(operation, userName, uuid, wineName, price, price, signature, transaction);
+
+		// Add transaction to Blockchain: <sell/buy>:<uuid>:<username>:<wineName>:<quantity>:<price>:<base64Signature>
+		String nft = String.format("sell:%s:%s:%s:%d:%d:%s", uuid, username, wineName, quantity, price, base64Signature);
+		bc.addNFT(nft);
 		return true;
 	}
 

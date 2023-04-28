@@ -117,13 +117,6 @@ public class SecurityRSA {
 		return Base64.getEncoder().encodeToString(publicKey.getEncoded());
 	}
 
-	public static byte[] sign(byte[] toSign, PrivateKey key) throws Exception {
-		Signature signature = Signature.getInstance("SHA512withRSA");
-		signature.initSign(key/* , new SecureRandom() */);
-		signature.update(toSign);
-		return signature.sign();
-	}
-
 	public static boolean isSignedNonce(byte[] toSign, byte[] maybeSigned, PublicKey key) throws Exception {
 		Signature signature = Signature.getInstance("SHA512withRSA");
 		signature.initVerify(key);
@@ -172,10 +165,17 @@ public class SecurityRSA {
 		return cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
 	}
 
-	public static boolean verifyTransactionSignature(byte[] maybeSigned, byte[] toSign, PublicKey key) throws InvalidKeyException, SignatureException, NoSuchAlgorithmException{
+	public static byte[] sign(byte[] toSign, PrivateKey key) throws Exception {
+		Signature signature = Signature.getInstance("SHA512withRSA");
+		signature.initSign(key/* , new SecureRandom() */);
+		signature.update(toSign);
+		return signature.sign();
+	}
+
+	public static boolean verifySignature(byte[] verifyIfSigned, byte[] signed, PublicKey key) throws InvalidKeyException, SignatureException, NoSuchAlgorithmException{
 		Signature signature = Signature.getInstance("SHA512withRSA");
 		signature.initVerify(key);
-		signature.update(toSign);
-		return signature.verify(maybeSigned);
+		signature.update(verifyIfSigned);
+		return signature.verify(signed);
 	}
 }
