@@ -2,10 +2,11 @@ import java.io.*;
 import java.net.*;
 
 public class NewClient {
-	private static final String SERVER_IP = "localhost";
-	private static final int SERVER_PORT = 8080;
+	private static String SERVER_IP;
+	private static final int SERVER_PORT = 12345;
 
 	public static void main(String[] args) throws IOException {
+		SERVER_IP = args[0];
 		Socket socket = null;
 		BufferedReader inputReader = null;
 		PrintWriter out = null;

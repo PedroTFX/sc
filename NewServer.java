@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 
 public class NewServer {
-	private static final int PORT = 8080;
+	private static final int PORT = 12345;
 
 	public static void main(String[] args) {
 		try (ServerSocket serverSocket = new ServerSocket(PORT)) {
